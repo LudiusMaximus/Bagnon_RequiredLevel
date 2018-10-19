@@ -15,7 +15,7 @@ local tonumber = tonumber
 
 -- WoW API
 local CreateFrame = _G.CreateFrame
-local GetDetailedItemLevelInfo = _G.GetDetailedItemLevelInfo 
+local GetDetailedItemLevelInfo = _G.GetDetailedItemLevelInfo
 local GetItemInfo = _G.GetItemInfo
 local GetItemQualityColor = _G.GetItemQualityColor
 
@@ -66,17 +66,17 @@ local ReadRecipeTooltip = function(scannerTooltip, professionName)
 
   local searchPattern = nil
   local searchOnlySkillPattern = nil
-  
+
   -- If the locale is not known, just search for the required skill and ignore the expansion.
   if not moduleData.itemMinSkillString[GetLocale()] or not moduleData.expansionIdentifierToVersionNumber[GetLocale()] then
     searchOnlySkillPattern = "^.*%((%d+)%).*$"
   else
     -- _G.ITEM_MIN_SKILL = "Requires %s (%d)"
     -- ...must be turned into: "^Requires%s(.*)%s?" .. itemSubType .. "%s%((%d+)%)$"
-    
+
     -- Need %%%%s here, because this string will be inserted twice.
     local localisedItemMinSkill = string_gsub(string_gsub(string_gsub(moduleData.itemMinSkillString[GetLocale()], " ", "%%%%s?"), "e", "(.*)"), "p", professionName)
-    
+
     -- "%s?%%.-s%s" matches both " %s " (EN), "%s " (FR) and " %1$s " (DE) in _G.ITEM_MIN_SKILL.
     -- "%(%%.-d%)%s?" matches both " (%d)" (EN), " (%d) " (FR) and " (%2$d)" (DE) in _G.ITEM_MIN_SKILL.
     searchPattern = string_gsub(string_gsub("^" .. _G.ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", "%%s?" .. localisedItemMinSkill .. "%%s"), "%(%%.-d%)%s?", "%%((%%d+)%%)%%s?")
@@ -89,17 +89,17 @@ local ReadRecipeTooltip = function(scannerTooltip, professionName)
     if line then
       local msg = line:GetText()
       if msg then
-            
+
         if (msg == _G.ITEM_SPELL_KNOWN) then
           -- If the recipe is already known, we are not interested in its required skill level!
           return true, nil, nil, nil
-        
+
         elseif searchPattern and string_find(msg, searchPattern) then
-        
+
           local expansionIdentifier, requiredSkill = string_match(msg, searchPattern)
           -- Trim trailing blank space if any.
           expansionIdentifier = string_gsub(expansionIdentifier, "^(.-)%s$", "%1")
-          
+
           -- Check if recipe can be learned.
           local _, g = line:GetTextColor()
 
@@ -109,9 +109,9 @@ local ReadRecipeTooltip = function(scannerTooltip, professionName)
             print ("Bagnon_RequiredLevel (ERROR): Could not find", expansionIdentifier, "for", GetLocale())
             expansionPrefix = "?"
           end
-          
+
           return false, (tonumber(g) < 0.2), expansionPrefix .. ".", requiredSkill
-          
+
         elseif searchOnlySkillPattern and string_find(msg, searchOnlySkillPattern) then
           local requiredSkill = string_match(msg, searchOnlySkillPattern)
           -- Check if recipe can be learned.
@@ -121,17 +121,17 @@ local ReadRecipeTooltip = function(scannerTooltip, professionName)
       end
     end
   end
-  
+
   -- We may actually reach here if a non-recipe item swaps slots with a recipe item.
   return nil, nil, nil, nil
-  
+
 end
-  
-  
+
+
 
 
 local PostUpdateButton = function(self)
-	local itemLink = self:GetItem() 
+	local itemLink = self:GetItem()
 	if itemLink then
 
     -- Locked items should always be greyed out.
@@ -139,17 +139,17 @@ local PostUpdateButton = function(self)
       _G[self:GetName().."IconTexture"]:SetVertexColor(1,1,1)
       _G[self:GetName().."IconTexture"]:SetDesaturated(1)
     end
-  
+
 		-- Retrieve or create this button's RequiredLevel text
 		local RequiredLevel = ButtonCache[self] or CacheButton(self)
     -- Got to set a default font.
     RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
-    
+
 		-- Get some blizzard info about the current item
 		local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId = GetItemInfo(itemLink)
-    
+
     if (itemMinLevel > UnitLevel("player")) then
-      
+
       if not Unfit:IsItemUnusable(itemLink) then
         RequiredLevel:SetText(itemMinLevel)
         if not self.info.locked then
@@ -159,11 +159,11 @@ local PostUpdateButton = function(self)
       end
       return
     end
-    
-    
+
+
     -- LE_ITEM_CLASS_RECIPE by Kanegasi (https://www.wowinterface.com/forums/showthread.php?p=330514#post330514)
     if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
-    
+
       if not CharacterHasProfession(itemSubType) then
         RequiredLevel:SetText("")
         if Addon.sets.glowUnusable then
@@ -179,7 +179,7 @@ local PostUpdateButton = function(self)
 
 
       -- print ("---->", itemLink, string.match(itemLink, "item[%-?%d:]+"))
-      
+
       -- Scan tooltip.
       scannerTooltip.owner = self
       scannerTooltip:SetOwner(self, "ANCHOR_NONE")
@@ -187,9 +187,9 @@ local PostUpdateButton = function(self)
       if (scannerTooltip:NumLines() == 0) then
         scannerTooltip:SetHyperlink(itemLink)
       end
-      
+
       local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(scannerTooltip, itemSubType)
-      
+
       if alreadyKnown then
         RequiredLevel:SetText("")
         if not self.info.locked then
@@ -198,25 +198,25 @@ local PostUpdateButton = function(self)
         end
         return
       end
-      
+
       if notEnoughSkill then
         RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
         RequiredLevel:SetText(expansionPrefix .. requiredSkill)
-        
+
         if not self.info.locked then
           _G[self:GetName().."IconTexture"]:SetVertexColor(1,.3,.3)
           _G[self:GetName().."IconTexture"]:SetDesaturated(1)
         end
         return
       end
-      
+
       -- Recipe is actually learnable.
       RequiredLevel:SetText("")
       if not self.info.locked then
         _G[self:GetName().."IconTexture"]:SetVertexColor(1,1,1)
         _G[self:GetName().."IconTexture"]:SetDesaturated(nil)
       end
-      
+
     -- Any other item.
     else
       RequiredLevel:SetText("")
@@ -229,12 +229,12 @@ local PostUpdateButton = function(self)
 		if ButtonCache[self] then
 			ButtonCache[self]:SetText("")
 		end
-	end	
-end 
+	end
+end
 
 Module.OnEnable = function(self)
 	hooksecurefunc(Bagnon.ItemSlot, "Update", PostUpdateButton)
-  
+
   -- Needed because otherwise, UpdateUpgradeIcon will reset the VertexColor.
 	hooksecurefunc(Bagnon.ItemSlot, "UpdateUpgradeIcon", PostUpdateButton)
   -- Needed to set the VertexColor in time when BAG_UPDATE_COOLDOWN is triggered.
@@ -245,4 +245,4 @@ Module.OnEnable = function(self)
   -- Needed to keep the desaturation.
 	hooksecurefunc(Bagnon.ItemSlot, "SetLocked", PostUpdateButton)
 
-end 
+end
