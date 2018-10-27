@@ -56,6 +56,20 @@ local CharacterHasProfession = function(professionName)
 end
 
 
+
+-- expansionPrefixes:
+
+moduleData.EP_VANILLA =  "1"
+moduleData.EP_BC =       "2"
+moduleData.EP_WOTLK =    "3"
+moduleData.EP_CATA =     "4"
+moduleData.EP_PANDARIA = "5"
+moduleData.EP_WOD =      "6"
+moduleData.EP_LEGION =   "7"
+moduleData.EP_BFA =      "8"
+
+
+
 -- Input:   scannerTooltip  : Tooltip of the recipe.
 --          professionName  : Localised itemSubType of the recipe (getItemInfo()).
 -- Output:  alreadyKnown    : True if recipe is already known.
