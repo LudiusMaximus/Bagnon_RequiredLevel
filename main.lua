@@ -32,7 +32,7 @@ local CacheButton = function(self)
 	-- Using standard blizzard fonts here
 	local RequiredLevel = PluginContainerFrame:CreateFontString()
 	RequiredLevel:SetDrawLayer("ARTWORK", 1)
-	RequiredLevel:SetPoint("BOTTOMLEFT", 2, 1)
+	RequiredLevel:SetPoint("BOTTOMLEFT", 2, 2)
   RequiredLevel:SetTextColor(.95, .95, .95)
 
 	-- Store the reference for the next time
@@ -47,9 +47,14 @@ local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelscannerToo
 
 -- Function to return if the character has a certain profession.
 local CharacterHasProfession = function(professionName)
-  for _, professionIndex in ipairs({GetProfessions()}) do
-    if (professionName == GetProfessionInfo(professionIndex)) then
-      return true;
+  -- Cannot do for .. ipairs, because if one profession is missing, the iteration stops...
+  local professionList = {}
+  professionList[1], professionList[2], professionList[3], professionList[4], professionList[5] = GetProfessions()
+  for i = 1, 5 do
+    if (professionList[i]) then
+      if (professionName == GetProfessionInfo(professionList[i])) then
+        return true;
+      end
     end
   end
   return false
