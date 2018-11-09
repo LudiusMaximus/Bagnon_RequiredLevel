@@ -167,18 +167,19 @@ local PostUpdateButton = function(self)
 		-- Get some blizzard info about the current item
 		local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId = GetItemInfo(itemLink)
 
-    if (itemMinLevel > UnitLevel("player")) then
+    if (itemMinLevel) then
+      if (itemMinLevel > UnitLevel("player")) then
 
-      if not Unfit:IsItemUnusable(itemLink) then
-        RequiredLevel:SetText(itemMinLevel)
-        if not self.info.locked then
-          _G[self:GetName().."IconTexture"]:SetVertexColor(1,.3,.3)
-          _G[self:GetName().."IconTexture"]:SetDesaturated(1)
+        if not Unfit:IsItemUnusable(itemLink) then
+          RequiredLevel:SetText(itemMinLevel)
+          if not self.info.locked then
+            _G[self:GetName().."IconTexture"]:SetVertexColor(1,.3,.3)
+            _G[self:GetName().."IconTexture"]:SetDesaturated(1)
+          end
         end
+        return
       end
-      return
     end
-
 
     -- LE_ITEM_CLASS_RECIPE by Kanegasi (https://www.wowinterface.com/forums/showthread.php?p=330514#post330514)
     if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
@@ -235,15 +236,16 @@ local PostUpdateButton = function(self)
         _G[self:GetName().."IconTexture"]:SetVertexColor(1,1,1)
         _G[self:GetName().."IconTexture"]:SetDesaturated(nil)
       end
-
+      return
+    end  
+      
     -- Any other item.
-    else
-      RequiredLevel:SetText("")
-      if not self.info.locked then
-        _G[self:GetName().."IconTexture"]:SetVertexColor(1,1,1)
-        _G[self:GetName().."IconTexture"]:SetDesaturated(nil)
-      end
-		end
+    RequiredLevel:SetText("")
+    if not self.info.locked then
+      _G[self:GetName().."IconTexture"]:SetVertexColor(1,1,1)
+      _G[self:GetName().."IconTexture"]:SetDesaturated(nil)
+    end
+    
 	else
 		if ButtonCache[self] then
 			ButtonCache[self]:SetText("")
