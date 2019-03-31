@@ -362,16 +362,37 @@ local PostUpdateButton = function(self)
   end
 end
 
+
+
 Module.OnEnable = function(self)
   hooksecurefunc(Bagnon.ItemSlot, "Update", PostUpdateButton)
 
-  -- Needed because otherwise, UpdateUpgradeIcon will reset the VertexColor.
+  -- Needed because otherwise UpdateUpgradeIcon will reset the VertexColor.
   hooksecurefunc(Bagnon.ItemSlot, "UpdateUpgradeIcon", PostUpdateButton)
+
   -- Needed to set the VertexColor in time when BAG_UPDATE_COOLDOWN is triggered.
   hooksecurefunc(Bagnon.ItemSlot, "UpdateCooldown", PostUpdateButton)
+
+  -- Minimal working example for
+  -- https://github.com/LudiusMaximus/Bagnon_RequiredLevel/issues/4:
+  -- hooksecurefunc(Bagnon.ItemSlot, "UpdateCooldown",
+    -- function(self)
+
+      -- local itemLink = self:GetItem()
+      -- if itemLink then
+        -- scannerTooltip:SetOwner(self, "ANCHOR_NONE")
+        -- scannerTooltip:SetBagItem(self:GetBag(), self:GetID())
+      -- end
+
+    -- end
+  -- )
+
+
+
   -- Needed to keep the frame of unusable recipes.
   hooksecurefunc(Bagnon.ItemSlot, "OnEnter", PostUpdateButton)
   hooksecurefunc(Bagnon.ItemSlot, "OnLeave", PostUpdateButton)
+
   -- Needed to keep the desaturation.
   hooksecurefunc(Bagnon.ItemSlot, "SetLocked", PostUpdateButton)
 
