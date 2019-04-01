@@ -199,7 +199,6 @@ local ReadRecipeTooltip = function(professionName, self)
     local line = _G[scannerTooltip:GetName().."TextLeft"..i]
     if line then
       local msg = line:GetText()
-      print(msg)
       if msg then
 
         if (msg == _G.ITEM_SPELL_KNOWN) then
