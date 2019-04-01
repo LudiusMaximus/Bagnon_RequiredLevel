@@ -42,14 +42,12 @@ local CacheButton = function(self)
 end
 
 
--- Tooltip used for scanning
-local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelScannerTooltip", WorldFrame, "GameTooltipTemplate")
-scannerTooltip.owner = WorldFrame
-scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
-
+-- Tooltip used for scanning.
+local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelScannerTooltip", nil, "GameTooltipTemplate")
 
 -- Function to set the tooltip to the current item.
 local SetTooltip = function(self)
+  scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
   scannerTooltip:SetBagItem(self:GetBag(), self:GetID())
   if (scannerTooltip:NumLines() == 0) then
     scannerTooltip:SetHyperlink(self:GetItem())
@@ -201,6 +199,7 @@ local ReadRecipeTooltip = function(professionName, self)
     local line = _G[scannerTooltip:GetName().."TextLeft"..i]
     if line then
       local msg = line:GetText()
+      print(msg)
       if msg then
 
         if (msg == _G.ITEM_SPELL_KNOWN) then
