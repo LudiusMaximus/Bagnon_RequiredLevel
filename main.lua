@@ -43,12 +43,13 @@ end
 
 
 -- Tooltip used for scanning
-local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelscannerTooltip", WorldFrame, "GameTooltipTemplate")
+local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelScannerTooltip", WorldFrame, "GameTooltipTemplate")
+scannerTooltip.owner = WorldFrame
+scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+
 
 -- Function to set the tooltip to the current item.
 local SetTooltip = function(self)
-  scannerTooltip.owner = self
-  scannerTooltip:SetOwner(self, "ANCHOR_NONE")
   scannerTooltip:SetBagItem(self:GetBag(), self:GetID())
   if (scannerTooltip:NumLines() == 0) then
     scannerTooltip:SetHyperlink(self:GetItem())
@@ -59,6 +60,8 @@ end
 
 local ItemNeedsLockpicking = function(self)
 
+  SetTooltip(self)
+
   -- Get the localised name for Lockpicking.
   local localisedLockpicking = GetSpellInfo(1809)
 
@@ -68,7 +71,6 @@ local ItemNeedsLockpicking = function(self)
   searchPattern = string_gsub(string_gsub("^" .. _G.ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", ".-" .. localisedLockpicking .. ".-%%s"), "%(%%.-d%)%s?", "%%((%%d+)%%)%%s?")
 
   -- Tooltip and scanning by Phanx (https://www.wowinterface.com/forums/showthread.php?p=270331#post270331)
-  SetTooltip(self)
   for i = scannerTooltip:NumLines(), 2, -1 do
     local line = _G[scannerTooltip:GetName().."TextLeft"..i]
     if line then
@@ -105,9 +107,6 @@ local CharacterHasProfession = function(self)
     for i = 1, 5 do
       if (professionList[i]) then
 
-        -- Scan the tooltip for the profession name.
-        -- Tooltip and scanning by Phanx (https://www.wowinterface.com/forums/showthread.php?p=270331#post270331)
-
         local professionName = GetProfessionInfo(professionList[i])
 
         -- https://www.lua.org/pil/20.2.html
@@ -115,6 +114,7 @@ local CharacterHasProfession = function(self)
         -- "%(%%.-d%)%s?" matches both "(%d)" (EN), "(%d) " (FR) and "(%2$d)" (DE) in _G.ITEM_MIN_SKILL.
         searchPattern = string_gsub(string_gsub("^" .. _G.ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", ".-" .. professionName .. ".-%%s"), "%(%%.-d%)%s?", ".-")
 
+        -- Tooltip and scanning by Phanx (https://www.wowinterface.com/forums/showthread.php?p=270331#post270331)
         for i = scannerTooltip:NumLines(), 2, -1 do
           local line = _G[scannerTooltip:GetName().."TextLeft"..i]
           if line then
@@ -174,6 +174,8 @@ moduleData.EP_BFA =      "8"
 --          requiredSkill   : Required profession skill to learn recipe.
 local ReadRecipeTooltip = function(professionName, self)
 
+  SetTooltip(self)
+
   -- https://www.lua.org/pil/20.2.html
   local searchPattern = nil
   local searchOnlySkillPattern = nil
@@ -194,7 +196,7 @@ local ReadRecipeTooltip = function(professionName, self)
     searchPattern = string_gsub(string_gsub("^" .. _G.ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", "%%s?" .. localisedItemMinSkill .. "%%s"), "%(%%.-d%)%s?", "%%((%%d+)%%)%%s?")
   end
 
-  SetTooltip(self)
+  -- Tooltip and scanning by Phanx (https://www.wowinterface.com/forums/showthread.php?p=270331#post270331)
   for i = scannerTooltip:NumLines(), 2, -1 do
     local line = _G[scannerTooltip:GetName().."TextLeft"..i]
     if line then
@@ -372,22 +374,6 @@ Module.OnEnable = function(self)
 
   -- Needed to set the VertexColor in time when BAG_UPDATE_COOLDOWN is triggered.
   hooksecurefunc(Bagnon.ItemSlot, "UpdateCooldown", PostUpdateButton)
-
-  -- Minimal working example for
-  -- https://github.com/LudiusMaximus/Bagnon_RequiredLevel/issues/4:
-  -- hooksecurefunc(Bagnon.ItemSlot, "UpdateCooldown",
-    -- function(self)
-
-      -- local itemLink = self:GetItem()
-      -- if itemLink then
-        -- scannerTooltip:SetOwner(self, "ANCHOR_NONE")
-        -- scannerTooltip:SetBagItem(self:GetBag(), self:GetID())
-      -- end
-
-    -- end
-  -- )
-
-
 
   -- Needed to keep the frame of unusable recipes.
   hooksecurefunc(Bagnon.ItemSlot, "OnEnter", PostUpdateButton)
