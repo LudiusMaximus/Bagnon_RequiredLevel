@@ -44,11 +44,21 @@ end
 
 -- Tooltip used for scanning.
 local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelScannerTooltip", nil, "GameTooltipTemplate")
+scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+
 
 -- Function to set the tooltip to the current item.
 local SetTooltip = function(self)
-  scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+
+  -- Clear the tooltip.
+  scannerTooltip:ClearLines()
+  
+  -- Try to set the tooltip with self:GetBag() and self:GetID().
   scannerTooltip:SetBagItem(self:GetBag(), self:GetID())
+  -- This will fail for bank slots (GetBag() == -1) and when looking at cached bags;
+  -- like bank slots while not at the bank, or bags of other characters.
+  -- In this case we use the SetHyperlink() fallback, which may sometimes be
+  -- inaccurate for items that exist in different variants...
   if (scannerTooltip:NumLines() == 0) then
     scannerTooltip:SetHyperlink(self:GetItem())
   end
