@@ -52,16 +52,23 @@ local SetTooltip = function(self)
 
   -- Clear the tooltip.
   scannerTooltip:ClearLines()
-  
-  -- Try to set the tooltip with self:GetBag() and self:GetID().
-  scannerTooltip:SetBagItem(self:GetBag(), self:GetID())
-  -- This will fail for bank slots (GetBag() == -1) and when looking at cached bags;
-  -- like bank slots while not at the bank, or bags of other characters.
-  -- In this case we use the SetHyperlink() fallback, which may sometimes be
-  -- inaccurate for items that exist in different variants...
+
+  -- SetBagItem() does not work for bank slots. So we use this instead.
+  -- (Thanks to p3lim: https://www.wowinterface.com/forums/showthread.php?p=331883)
+  if (self:GetBag() == -1) then
+    scannerTooltip:SetInventoryItem('player', self:GetID()+47)
+  else
+    -- Try to set the tooltip with self:GetBag() and self:GetID().
+    scannerTooltip:SetBagItem(self:GetBag(), self:GetID())
+  end
+
+  -- The above will still fail for cached bags; like bank slots while not
+  -- at the bank or bags of other characters. In this case we use the
+  -- SetHyperlink() fallback, which may sometimes be inaccurate.
   if (scannerTooltip:NumLines() == 0) then
     scannerTooltip:SetHyperlink(self:GetItem())
   end
+
 end
 
 
