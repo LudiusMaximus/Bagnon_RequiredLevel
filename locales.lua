@@ -1,17 +1,6 @@
 local MODULE, moduleData =  ...
 
 
--- Check these items to create more locales...
--- Outland:   https://www.wowhead.com/item=34126/recipe-shoveltusk-soup
--- Northrend: https://www.wowhead.com/item=43036/recipe-dragonfin-filet
--- Cataclysm: https://www.wowhead.com/item=62800/recipe-seafood-magnifique-feast
--- Pandaria:  https://www.wowhead.com/item=74658/recipe-spicy-vegetable-chips
--- Draenor:   https://www.wowhead.com/item=116347/recipe-burnished-leather-bag
--- Legion:    https://www.wowhead.com/item=133830/recipe-lavish-suramar-feast
--- Zandalari: https://www.wowhead.com/spell=265817/zandalari-cooking
--- Kul Tiran: https://www.wowhead.com/spell=264646/kul-tiran-cooking
-
-
 -- The %s in _G.ITEM_MIN_SKILL = "Requires %s (%d)" is replaced
 -- by an expansion identifier and the profession name.
 -- But the order depends on the locale.
@@ -23,6 +12,8 @@ moduleData.itemMinSkillString = {
   ["deDE"] = "p e",
   ["frFR"] = "p e",
   ["itIT"] = "p e",
+  ["esES"] = "p e",
+  ["esMX"] = "p e",
 }
 
 moduleData.expansionIdentifierToVersionNumber = {
@@ -81,4 +72,39 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["di Zandalar"] =           moduleData.EP_BFA,
     ["di Kul Tiras"] =          moduleData.EP_BFA,
   },
+  ["esES"] = {
+    [""] =                      moduleData.EP_VANILLA,
+    ["de Terrallende"] =        moduleData.EP_BC,
+    ["de Rasganorte"] =         moduleData.EP_WRATH,
+    ["de Cataclysm"] =          moduleData.EP_CATA,
+    ["de Pandaria"] =           moduleData.EP_PANDARIA,
+    ["de Draenor"] =            moduleData.EP_WOD,
+    ["de Legion"] =             moduleData.EP_LEGION,
+    ["Zandalari"] =             moduleData.EP_BFA,
+    ["de Kul Tiras"] =          moduleData.EP_BFA,
+  },
+  ["esMX"] = {
+    [""] =                      moduleData.EP_VANILLA,
+    ["de Terrallende"] =        moduleData.EP_BC,
+    ["de Rasganorte"] =         moduleData.EP_WRATH,
+    ["de Cataclysm"] =          moduleData.EP_CATA,
+    ["de Pandaria"] =           moduleData.EP_PANDARIA,
+    ["de Draenor"] =            moduleData.EP_WOD,
+    ["de Legion"] =             moduleData.EP_LEGION,
+    ["Zandalari"] =             moduleData.EP_BFA,
+    ["de Kul Tiras"] =          moduleData.EP_BFA,
+  },
+  
+  
+  -- Check these items to create more locales...
+  -- Outland:   https://www.wowhead.com/item=34126/recipe-shoveltusk-soup
+  -- Northrend: https://www.wowhead.com/item=43036/recipe-dragonfin-filet
+  -- Cataclysm: https://www.wowhead.com/item=62800/recipe-seafood-magnifique-feast
+  -- Pandaria:  https://www.wowhead.com/item=74658/recipe-spicy-vegetable-chips
+  -- Draenor:   https://www.wowhead.com/item=116347/recipe-burnished-leather-bag
+  -- Legion:    https://www.wowhead.com/item=133830/recipe-lavish-suramar-feast
+  -- Zandalari: https://www.wowhead.com/spell=265817/zandalari-cooking
+  -- Kul Tiran: https://www.wowhead.com/spell=264646/kul-tiran-cooking
+  
+  
 }
