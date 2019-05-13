@@ -339,7 +339,7 @@ local PostUpdateButton = function(self)
       if alreadyKnown then
         RequiredLevel:SetText("")
         if not self.info.locked then
-          _G[self:GetName().."IconTexture"]:SetVertexColor(.4,.9,.4)
+          _G[self:GetName().."IconTexture"]:SetVertexColor(.4,.4,.4)
           _G[self:GetName().."IconTexture"]:SetDesaturated(1)
         end
         return
