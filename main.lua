@@ -7,7 +7,6 @@ local Unfit = LibStub('Unfit-1.0')
 
 -- Lua API
 local _G = _G
-local select = select
 local string_find = string.find
 local string_gsub = string.gsub
 local string_match = string.match
@@ -15,28 +14,62 @@ local tonumber = tonumber
 
 -- WoW API
 local CreateFrame = _G.CreateFrame
-local GetDetailedItemLevelInfo = _G.GetDetailedItemLevelInfo
 local GetItemInfo = _G.GetItemInfo
-local GetItemQualityColor = _G.GetItemQualityColor
+local GetSpellInfo = _G.GetSpellInfo
+local GetProfessions = _G.GetProfessions
+local GetProfessionInfo = _G.GetProfessionInfo
+local UnitLevel = _G.UnitLevel
+
+-- WoW Strings
+local ITEM_MIN_SKILL = _G.ITEM_MIN_SKILL
+local ITEM_SPELL_KNOWN = _G.ITEM_SPELL_KNOWN
+local LE_ITEM_CLASS_RECIPE = _G.LE_ITEM_CLASS_RECIPE
+local LE_ITEM_RECIPE_BOOK = _G.LE_ITEM_RECIPE_BOOK
+
 
 -- Cache of RequiredLevel texts
 local ButtonCache = {}
 
--- Initialize the button
-local CacheButton = function(self)
 
-  -- Adding an extra layer to get it above glow and border textures
-  local PluginContainerFrame = _G[self:GetName().."RequiredLevelFrame"] or CreateFrame("Frame", self:GetName().."RequiredLevelFrame", self)
-  PluginContainerFrame:SetAllPoints()
+
+-- Retrieve a button's plugin container
+local GetPluginContainter = function(button)
+	local name = button:GetName() .. "RequiredLevelFrame"
+	local frame = _G[name]
+	if (not frame) then 
+    -- Adding an extra layer to get it above glow and border textures.
+		frame = CreateFrame("Frame", name, button)
+		frame:SetAllPoints()
+	end 
+	return frame
+end
+
+-- Initialize the button
+local CacheButton = function(button)
 
   -- Using standard blizzard fonts here
-  local RequiredLevel = PluginContainerFrame:CreateFontString()
+  local RequiredLevel = GetPluginContainter(button):CreateFontString()
   RequiredLevel:SetDrawLayer("ARTWORK", 1)
   RequiredLevel:SetPoint("BOTTOMLEFT", 2, 2)
   RequiredLevel:SetTextColor(.95, .95, .95)
 
-  -- Store the reference for the next time
-  ButtonCache[self] = RequiredLevel
+
+  -- Hide Goldpaw's frame.
+  -- TODO: Would be nicer to just replace the "BoE" text in bottomLeft corner...
+  -- local GoldpawFrame = _G[button:GetName().."ExtraInfoFrame"]
+  -- if GoldpawFrame and GoldpawFrame:IsVisible() then
+    -- GoldpawFrame:Hide()
+  -- end
+  
+  -- Move Pawn out of the way.
+  local UpgradeIcon = button.UpgradeIcon
+  if UpgradeIcon then
+    UpgradeIcon:ClearAllPoints()
+    UpgradeIcon:SetPoint("BOTTOMRIGHT", 2, 0)
+  end
+
+  -- Store the reference for the next time.
+  ButtonCache[button] = RequiredLevel
 
   return RequiredLevel
 end
@@ -48,42 +81,42 @@ scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
 
 -- Function to set the tooltip to the current item.
-local SetTooltip = function(self)
+local SetTooltip = function(button)
 
   -- Clear the tooltip.
   scannerTooltip:ClearLines()
 
   -- SetBagItem() does not work for bank slots. So we use this instead.
   -- (Thanks to p3lim: https://www.wowinterface.com/forums/showthread.php?p=331883)
-  if (self:GetBag() == -1) then
-    scannerTooltip:SetInventoryItem('player', self:GetID()+47)
+  if (button:GetBag() == -1) then
+    scannerTooltip:SetInventoryItem('player', button:GetID()+47)
   else
-    -- Try to set the tooltip with self:GetBag() and self:GetID().
-    scannerTooltip:SetBagItem(self:GetBag(), self:GetID())
+    -- Try to set the tooltip with button:GetBag() and button:GetID().
+    scannerTooltip:SetBagItem(button:GetBag(), button:GetID())
   end
 
   -- The above will still fail for cached bags; like bank slots while not
   -- at the bank or bags of other characters. In this case we use the
   -- SetHyperlink() fallback, which may sometimes be inaccurate.
   if (scannerTooltip:NumLines() == 0) then
-    scannerTooltip:SetHyperlink(self:GetItem())
+    scannerTooltip:SetHyperlink(button:GetItem())
   end
 
 end
 
 
 
-local ItemNeedsLockpicking = function(self)
+local ItemNeedsLockpicking = function(button)
 
-  SetTooltip(self)
+  SetTooltip(button)
 
   -- Get the localised name for Lockpicking.
   local localisedLockpicking = GetSpellInfo(1809)
 
   -- https://www.lua.org/pil/20.2.html
-  -- "%s?%%.-s%s" matches both " %s " (EN), "%s " (FR) and " %1$s " (DE) in _G.ITEM_MIN_SKILL.
-  -- "%(%%.-d%)%s?" matches both "(%d)" (EN), "(%d) " (FR) and "(%2$d)" (DE) in _G.ITEM_MIN_SKILL.
-  searchPattern = string_gsub(string_gsub("^" .. _G.ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", ".-" .. localisedLockpicking .. ".-%%s"), "%(%%.-d%)%s?", "%%((%%d+)%%)%%s?")
+  -- "%s?%%.-s%s" matches both " %s " (EN), "%s " (FR) and " %1$s " (DE) in ITEM_MIN_SKILL.
+  -- "%(%%.-d%)%s?" matches both "(%d)" (EN), "(%d) " (FR) and "(%2$d)" (DE) in ITEM_MIN_SKILL.
+  searchPattern = string_gsub(string_gsub("^" .. ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", ".-" .. localisedLockpicking .. ".-%%s"), "%(%%.-d%)%s?", "%%((%%d+)%%)%%s?")
 
   -- Tooltip and scanning by Phanx (https://www.wowinterface.com/forums/showthread.php?p=270331#post270331)
   for i = scannerTooltip:NumLines(), 2, -1 do
@@ -107,13 +140,13 @@ end
 -- Function to return if the character has a certain profession.
 -- For "Book" recipes we have to scan the tooltip
 -- in order to extract and return the profession name.
-local CharacterHasProfession = function(self)
+local CharacterHasProfession = function(button)
 
-  local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(self:GetItem())
+  local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(button:GetItem())
 
   if (itemSubTypeId == LE_ITEM_RECIPE_BOOK) then
-
-    SetTooltip(self)
+  
+    SetTooltip(button)
 
     -- Cannot do "for .. in ipairs", because if one profession is missing,
     -- the iteration would stop...
@@ -125,9 +158,9 @@ local CharacterHasProfession = function(self)
         local professionName = GetProfessionInfo(professionList[i])
 
         -- https://www.lua.org/pil/20.2.html
-        -- "%s?%%.-s%s" matches both " %s " (EN), "%s " (FR) and " %1$s " (DE) in _G.ITEM_MIN_SKILL.
-        -- "%(%%.-d%)%s?" matches both "(%d)" (EN), "(%d) " (FR) and "(%2$d)" (DE) in _G.ITEM_MIN_SKILL.
-        searchPattern = string_gsub(string_gsub("^" .. _G.ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", ".-" .. professionName .. ".-%%s"), "%(%%.-d%)%s?", ".-")
+        -- "%s?%%.-s%s" matches both " %s " (EN), "%s " (FR) and " %1$s " (DE) in ITEM_MIN_SKILL.
+        -- "%(%%.-d%)%s?" matches both "(%d)" (EN), "(%d) " (FR) and "(%2$d)" (DE) in ITEM_MIN_SKILL.
+        searchPattern = string_gsub(string_gsub("^" .. ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", ".-" .. professionName .. ".-%%s"), "%(%%.-d%)%s?", ".-")
 
         -- Tooltip and scanning by Phanx (https://www.wowinterface.com/forums/showthread.php?p=270331#post270331)
         for i = scannerTooltip:NumLines(), 2, -1 do
@@ -182,14 +215,14 @@ moduleData.EP_BFA =      "8"
 
 
 -- Input:   professionName  : The localised profession name to search for.
---          self            : The current item button; needed to set tooltip.
+--          button          : The current item button; needed to set tooltip.
 -- Output:  alreadyKnown    : True if recipe is already known.
 --          notEnoughSkill  : True if character does not have enough profession skill.
 --          expansionPrefix : Prefix depending on the recipe's WoW expansion.
 --          requiredSkill   : Required profession skill to learn recipe.
-local ReadRecipeTooltip = function(professionName, self)
+local ReadRecipeTooltip = function(professionName, button)
 
-  SetTooltip(self)
+  SetTooltip(button)
 
   -- https://www.lua.org/pil/20.2.html
   local searchPattern = nil
@@ -199,16 +232,16 @@ local ReadRecipeTooltip = function(professionName, self)
   if not moduleData.itemMinSkillString[GetLocale()] or not moduleData.expansionIdentifierToVersionNumber[GetLocale()] then
     searchOnlySkillPattern = "^.*%((%d+)%).*$"
   else
-    -- _G.ITEM_MIN_SKILL = "Requires %s (%d)"
+    -- ITEM_MIN_SKILL = "Requires %s (%d)"
     -- ...must be turned into: "^Requires%s(.*)%s?" .. localisedItemMinSkill .. "%s%((%d+)%)$"
     -- But watch out: For different locales the order of words is different (see below)!
 
     -- Need %%%%s here, because this string will be inserted twice.
     local localisedItemMinSkill = string_gsub(string_gsub(string_gsub(moduleData.itemMinSkillString[GetLocale()], " ", "%%%%s?"), "e", "(.*)"), "p", professionName)
 
-    -- "%s?%%.-s%s" matches both " %s " (EN), "%s " (FR) and " %1$s " (DE) in _G.ITEM_MIN_SKILL.
-    -- "%(%%.-d%)%s?" matches both "(%d)" (EN), "(%d) " (FR) and "(%2$d)" (DE) in _G.ITEM_MIN_SKILL.
-    searchPattern = string_gsub(string_gsub("^" .. _G.ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", "%%s?" .. localisedItemMinSkill .. "%%s"), "%(%%.-d%)%s?", "%%((%%d+)%%)%%s?")
+    -- "%s?%%.-s%s" matches both " %s " (EN), "%s " (FR) and " %1$s " (DE) in ITEM_MIN_SKILL.
+    -- "%(%%.-d%)%s?" matches both "(%d)" (EN), "(%d) " (FR) and "(%2$d)" (DE) in ITEM_MIN_SKILL.
+    searchPattern = string_gsub(string_gsub("^" .. ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", "%%s?" .. localisedItemMinSkill .. "%%s"), "%(%%.-d%)%s?", "%%((%%d+)%%)%%s?")
   end
 
   -- Tooltip and scanning by Phanx (https://www.wowinterface.com/forums/showthread.php?p=270331#post270331)
@@ -218,7 +251,7 @@ local ReadRecipeTooltip = function(professionName, self)
       local msg = line:GetText()
       if msg then
 
-        if (msg == _G.ITEM_SPELL_KNOWN) then
+        if (msg == ITEM_SPELL_KNOWN) then
           -- If the recipe is already known, we are not interested in its required skill level!
           return true, nil, nil, nil
 
@@ -257,18 +290,19 @@ end
 
 
 
-local PostUpdateButton = function(self)
-  local itemLink = self:GetItem()
+local PostUpdateButton = function(button)
+  local itemLink = button:GetItem()
   if itemLink then
 
     -- Locked items should always be greyed out.
-    if self.info.locked then
-      _G[self:GetName().."IconTexture"]:SetVertexColor(1,1,1)
-      _G[self:GetName().."IconTexture"]:SetDesaturated(1)
+    if button.info.locked then
+      local buttonIconTexture = _G[button:GetName().."IconTexture"]
+      buttonIconTexture:SetVertexColor(1,1,1)
+      buttonIconTexture:SetDesaturated(1)
     end
 
     -- Retrieve or create this button's RequiredLevel text.
-    local RequiredLevel = ButtonCache[self] or CacheButton(self)
+    local RequiredLevel = ButtonCache[button] or CacheButton(button)
     -- Got to set a default font.
     RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
 
@@ -278,16 +312,17 @@ local PostUpdateButton = function(self)
 
     -- Check for Junkboxes and Lockboxes (Miscellaneous Junk).
     if ((itemTypeId == 15) and (itemSubTypeId == 0)) then
-      local itemNeedsLockpicking, notEnoughSkill, requiredSkill = ItemNeedsLockpicking(self)
+      local itemNeedsLockpicking, notEnoughSkill, requiredSkill = ItemNeedsLockpicking(button)
 
       if (itemNeedsLockpicking) then
         if notEnoughSkill then
           RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
           RequiredLevel:SetText(requiredSkill)
 
-          if not self.info.locked then
-            _G[self:GetName().."IconTexture"]:SetVertexColor(1,.3,.3)
-            _G[self:GetName().."IconTexture"]:SetDesaturated(1)
+          if not button.info.locked then
+            local buttonIconTexture = _G[button:GetName().."IconTexture"]
+            buttonIconTexture:SetVertexColor(1,.3,.3)
+            buttonIconTexture:SetDesaturated(1)
           end
           return
         end
@@ -300,9 +335,10 @@ local PostUpdateButton = function(self)
 
         if not Unfit:IsItemUnusable(itemLink) then
           RequiredLevel:SetText(itemMinLevel)
-          if not self.info.locked then
-            _G[self:GetName().."IconTexture"]:SetVertexColor(1,.3,.3)
-            _G[self:GetName().."IconTexture"]:SetDesaturated(1)
+          if not button.info.locked then
+            local buttonIconTexture = _G[button:GetName().."IconTexture"]
+            buttonIconTexture:SetVertexColor(1,.3,.3)
+            buttonIconTexture:SetDesaturated(1)
           end
         end
         return
@@ -311,77 +347,82 @@ local PostUpdateButton = function(self)
 
     -- LE_ITEM_CLASS_RECIPE by Kanegasi (https://www.wowinterface.com/forums/showthread.php?p=330514#post330514)
     if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
-
+    
       -- For almost all recipes, itemSubType is also the profession name.
       -- https://wow.gamepedia.com/ItemType
       -- However, for "Book" recipes we have to extract the profession name from
       -- the tooltip. We do this at the same time as checking if the player has
       -- the profession at all. Thus, we only have to scan the tooltip for the professions
       -- the player has.
-      local hasProfession, professionName = CharacterHasProfession(self)
+      local hasProfession, professionName = CharacterHasProfession(button)
 
       if not hasProfession then
         RequiredLevel:SetText("")
         if Addon.sets.glowUnusable then
           r, g, b = RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b
-          self.IconBorder:SetTexture(id and C_ArtifactUI.GetRelicInfoByItemID(id) and 'Interface\\Artifacts\\RelicIconFrame' or 'Interface\\Common\\WhiteIconFrame')
-          self.IconBorder:SetVertexColor(r, g, b)
-          self.IconBorder:SetShown(r)
-          self.IconGlow:SetVertexColor(r, g, b, Addon.sets.glowAlpha)
-          self.IconGlow:SetShown(r)
+          button.IconBorder:SetTexture(id and C_ArtifactUI.GetRelicInfoByItemID(id) and 'Interface\\Artifacts\\RelicIconFrame' or 'Interface\\Common\\WhiteIconFrame')
+          button.IconBorder:SetVertexColor(r, g, b)
+          button.IconBorder:SetShown(r)
+          button.IconGlow:SetVertexColor(r, g, b, Addon.sets.glowAlpha)
+          button.IconGlow:SetShown(r)
         end
         return
       end
 
       -- Scan tooltip. (Not checking for itemSubTypeId != LE_ITEM_RECIPE_BOOK here because of efficiency.)
-      local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, self)
+      local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, button)
 
       if alreadyKnown then
         RequiredLevel:SetText("")
-        if not self.info.locked then
-          _G[self:GetName().."IconTexture"]:SetVertexColor(.4,.4,.4)
-          _G[self:GetName().."IconTexture"]:SetDesaturated(1)
+        if not button.info.locked then
+          local buttonIconTexture = _G[button:GetName().."IconTexture"]
+          buttonIconTexture:SetVertexColor(.4,.4,.4)
+          buttonIconTexture:SetDesaturated(1)
         end
         return
       end
 
       if notEnoughSkill then
+      
         RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
         RequiredLevel:SetText(expansionPrefix .. requiredSkill)
 
-        if not self.info.locked then
-          _G[self:GetName().."IconTexture"]:SetVertexColor(1,.3,.3)
-          _G[self:GetName().."IconTexture"]:SetDesaturated(1)
+        if not button.info.locked then
+          local buttonIconTexture = _G[button:GetName().."IconTexture"]
+          buttonIconTexture:SetVertexColor(1,.3,.3)
+          buttonIconTexture:SetDesaturated(1)
         end
         return
       end
 
       -- Recipe is actually learnable.
       RequiredLevel:SetText("")
-      if not self.info.locked then
-        _G[self:GetName().."IconTexture"]:SetVertexColor(1,1,1)
-        _G[self:GetName().."IconTexture"]:SetDesaturated(nil)
+      if not button.info.locked then
+        local buttonIconTexture = _G[button:GetName().."IconTexture"]
+        buttonIconTexture:SetVertexColor(1,1,1)
+        buttonIconTexture:SetDesaturated(nil)
       end
       return
     end
 
     -- Any other item.
     RequiredLevel:SetText("")
-    if not self.info.locked then
-      _G[self:GetName().."IconTexture"]:SetVertexColor(1,1,1)
-      _G[self:GetName().."IconTexture"]:SetDesaturated(nil)
+    if not button.info.locked then
+      local buttonIconTexture = _G[button:GetName().."IconTexture"]
+      buttonIconTexture:SetVertexColor(1,1,1)
+      buttonIconTexture:SetDesaturated(nil)
     end
 
   else
-    if ButtonCache[self] then
-      ButtonCache[self]:SetText("")
+    if ButtonCache[button] then
+      ButtonCache[button]:SetText("")
     end
   end
 end
 
 
 
-Module.OnEnable = function(self)
+Module.OnEnable = function()
   hooksecurefunc(Bagnon.ItemSlot, "Update", PostUpdateButton)
 
   -- Needed because otherwise UpdateUpgradeIcon will reset the VertexColor.
