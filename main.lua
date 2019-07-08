@@ -27,25 +27,46 @@ local LE_ITEM_CLASS_RECIPE = _G.LE_ITEM_CLASS_RECIPE
 local LE_ITEM_RECIPE_BOOK = _G.LE_ITEM_RECIPE_BOOK
 
 
--- Cache of RequiredLevel texts
-local ButtonCache = {}
-
 
 
 -- Retrieve a button's plugin container
 local GetPluginContainter = function(button)
 	local name = button:GetName() .. "RequiredLevelFrame"
 	local frame = _G[name]
-	if (not frame) then 
+	if (not frame) then
     -- Adding an extra layer to get it above glow and border textures.
 		frame = CreateFrame("Frame", name, button)
 		frame:SetAllPoints()
-	end 
+	end
 	return frame
 end
 
--- Initialize the button
-local CacheButton = function(button)
+
+
+
+-- Cache of ItemBind texts (Goldpaw's Bagnon_BoE).
+local Cache_ItemBind = {}
+local Cache_GetItemBind = function(button)
+  local goldpawFrame = _G[button:GetName().."ExtraInfoFrame"]
+  if goldpawFrame then
+    for _, child in ipairs({goldpawFrame:GetRegions()}) do
+      if child:IsObjectType("FontString") then
+        local text = child:GetText()
+        if text == "BoE" or text == "BoU" then
+          Cache_ItemBind[button] = child
+          break
+        end
+      end
+    end
+  end
+end
+
+
+
+
+-- Cache of RequiredLevel texts.
+local Cache_RequiredLevel = {}
+local Cache_GetRequiredLevel = function(button)
 
   -- Using standard blizzard fonts here
   local RequiredLevel = GetPluginContainter(button):CreateFontString()
@@ -53,23 +74,7 @@ local CacheButton = function(button)
   RequiredLevel:SetPoint("BOTTOMLEFT", 2, 2)
   RequiredLevel:SetTextColor(.95, .95, .95)
 
-
-  -- Hide Goldpaw's frame.
-  -- TODO: Would be nicer to just replace the "BoE" text in bottomLeft corner...
-  -- local GoldpawFrame = _G[button:GetName().."ExtraInfoFrame"]
-  -- if GoldpawFrame and GoldpawFrame:IsVisible() then
-    -- GoldpawFrame:Hide()
-  -- end
-  
-  -- Move Pawn out of the way.
-  local UpgradeIcon = button.UpgradeIcon
-  if UpgradeIcon then
-    UpgradeIcon:ClearAllPoints()
-    UpgradeIcon:SetPoint("BOTTOMRIGHT", 2, 0)
-  end
-
-  -- Store the reference for the next time.
-  ButtonCache[button] = RequiredLevel
+  Cache_RequiredLevel[button] = RequiredLevel
 
   return RequiredLevel
 end
@@ -145,7 +150,7 @@ local CharacterHasProfession = function(button)
   local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(button:GetItem())
 
   if (itemSubTypeId == LE_ITEM_RECIPE_BOOK) then
-  
+
     SetTooltip(button)
 
     -- Cannot do "for .. in ipairs", because if one profession is missing,
@@ -291,8 +296,15 @@ end
 
 
 local PostUpdateButton = function(button)
+
+
   local itemLink = button:GetItem()
   if itemLink then
+
+    -- Hide the whole Goldpaw frame. We show it later after we have hidden the "BoE" text if necessary.
+    -- Otherwise the "BoE" text may blink up before being replaced by "required level" text.
+    local goldpawFrame = _G[button:GetName().."ExtraInfoFrame"]
+    if goldpawFrame then goldpawFrame:Hide() end
 
     -- Locked items should always be greyed out.
     if button.info.locked then
@@ -302,12 +314,21 @@ local PostUpdateButton = function(button)
     end
 
     -- Retrieve or create this button's RequiredLevel text.
-    local RequiredLevel = ButtonCache[button] or CacheButton(button)
+    local RequiredLevel = Cache_RequiredLevel[button] or Cache_GetRequiredLevel(button)
     -- Got to set a default font.
     RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
 
     -- Get some blizzard info about the current item.
     local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(itemLink)
+
+
+    -- Get Goldpaw's "BoE" text and hide it, if it exists.
+    -- It will be shown later if not replaced by "required level" text.
+    local ItemBind = nil
+    if goldpawFrame then
+      ItemBind = Cache_ItemBind[button] or Cache_GetItemBind(button)
+      if ItemBind then ItemBind:Hide() end
+    end
 
 
     -- Check for Junkboxes and Lockboxes (Miscellaneous Junk).
@@ -316,6 +337,7 @@ local PostUpdateButton = function(button)
 
       if (itemNeedsLockpicking) then
         if notEnoughSkill then
+
           RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
           RequiredLevel:SetText(requiredSkill)
 
@@ -334,6 +356,7 @@ local PostUpdateButton = function(button)
       if (itemMinLevel > UnitLevel("player")) then
 
         if not Unfit:IsItemUnusable(itemLink) then
+
           RequiredLevel:SetText(itemMinLevel)
           if not button.info.locked then
             local buttonIconTexture = _G[button:GetName().."IconTexture"]
@@ -347,7 +370,7 @@ local PostUpdateButton = function(button)
 
     -- LE_ITEM_CLASS_RECIPE by Kanegasi (https://www.wowinterface.com/forums/showthread.php?p=330514#post330514)
     if (itemTypeId == LE_ITEM_CLASS_RECIPE) then
-    
+
       -- For almost all recipes, itemSubType is also the profession name.
       -- https://wow.gamepedia.com/ItemType
       -- However, for "Book" recipes we have to extract the profession name from
@@ -357,6 +380,8 @@ local PostUpdateButton = function(button)
       local hasProfession, professionName = CharacterHasProfession(button)
 
       if not hasProfession then
+        if goldpawFrame then goldpawFrame:Show() end
+        if ItemBind then ItemBind:Show() end
         RequiredLevel:SetText("")
         if Addon.sets.glowUnusable then
           r, g, b = RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b
@@ -373,6 +398,8 @@ local PostUpdateButton = function(button)
       local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, button)
 
       if alreadyKnown then
+        if goldpawFrame then goldpawFrame:Show() end
+        if ItemBind then ItemBind:Show() end
         RequiredLevel:SetText("")
         if not button.info.locked then
           local buttonIconTexture = _G[button:GetName().."IconTexture"]
@@ -383,7 +410,7 @@ local PostUpdateButton = function(button)
       end
 
       if notEnoughSkill then
-      
+
         RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
         RequiredLevel:SetText(expansionPrefix .. requiredSkill)
 
@@ -396,6 +423,8 @@ local PostUpdateButton = function(button)
       end
 
       -- Recipe is actually learnable.
+      if goldpawFrame then goldpawFrame:Show() end
+      if ItemBind then ItemBind:Show() end
       RequiredLevel:SetText("")
       if not button.info.locked then
         local buttonIconTexture = _G[button:GetName().."IconTexture"]
@@ -406,6 +435,9 @@ local PostUpdateButton = function(button)
     end
 
     -- Any other item.
+
+    if goldpawFrame then goldpawFrame:Show() end
+    if ItemBind then ItemBind:Show() end
     RequiredLevel:SetText("")
     if not button.info.locked then
       local buttonIconTexture = _G[button:GetName().."IconTexture"]
@@ -414,8 +446,8 @@ local PostUpdateButton = function(button)
     end
 
   else
-    if ButtonCache[button] then
-      ButtonCache[button]:SetText("")
+    if Cache_RequiredLevel[button] then
+      Cache_RequiredLevel[button]:SetText("")
     end
   end
 end
@@ -439,3 +471,4 @@ Module.OnEnable = function()
   hooksecurefunc(Bagnon.ItemSlot, "SetLocked", PostUpdateButton)
 
 end
+
