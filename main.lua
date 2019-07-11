@@ -29,6 +29,8 @@ local LE_ITEM_RECIPE_BOOK = _G.LE_ITEM_RECIPE_BOOK
 
 
 
+
+
 -- Retrieve a button's plugin container
 local GetPluginContainter = function(button)
 	local name = button:GetName() .. "RequiredLevelFrame"
@@ -54,7 +56,7 @@ local Cache_GetItemBind = function(button)
         local text = child:GetText()
         if text == "BoE" or text == "BoU" then
           Cache_ItemBind[button] = child
-          break
+          return Cache_ItemBind[button]
         end
       end
     end
@@ -297,15 +299,9 @@ end
 
 local PostUpdateButton = function(button)
 
-
   local itemLink = button:GetItem()
   if itemLink then
-
-    -- Hide the whole Goldpaw frame. We show it later after we have hidden the "BoE" text if necessary.
-    -- Otherwise the "BoE" text may blink up before being replaced by "required level" text.
-    local goldpawFrame = _G[button:GetName().."ExtraInfoFrame"]
-    if goldpawFrame then goldpawFrame:Hide() end
-
+  
     -- Locked items should always be greyed out.
     if button.info.locked then
       local buttonIconTexture = _G[button:GetName().."IconTexture"]
@@ -325,7 +321,7 @@ local PostUpdateButton = function(button)
     -- Get Goldpaw's "BoE" text and hide it, if it exists.
     -- It will be shown later if not replaced by "required level" text.
     local ItemBind = nil
-    if goldpawFrame then
+    if _G[button:GetName().."ExtraInfoFrame"] then
       ItemBind = Cache_ItemBind[button] or Cache_GetItemBind(button)
       if ItemBind then ItemBind:Hide() end
     end
@@ -356,7 +352,6 @@ local PostUpdateButton = function(button)
       if (itemMinLevel > UnitLevel("player")) then
 
         if not Unfit:IsItemUnusable(itemLink) then
-
           RequiredLevel:SetText(itemMinLevel)
           if not button.info.locked then
             local buttonIconTexture = _G[button:GetName().."IconTexture"]
@@ -380,7 +375,6 @@ local PostUpdateButton = function(button)
       local hasProfession, professionName = CharacterHasProfession(button)
 
       if not hasProfession then
-        if goldpawFrame then goldpawFrame:Show() end
         if ItemBind then ItemBind:Show() end
         RequiredLevel:SetText("")
         if Addon.sets.glowUnusable then
@@ -398,7 +392,6 @@ local PostUpdateButton = function(button)
       local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, button)
 
       if alreadyKnown then
-        if goldpawFrame then goldpawFrame:Show() end
         if ItemBind then ItemBind:Show() end
         RequiredLevel:SetText("")
         if not button.info.locked then
@@ -423,7 +416,6 @@ local PostUpdateButton = function(button)
       end
 
       -- Recipe is actually learnable.
-      if goldpawFrame then goldpawFrame:Show() end
       if ItemBind then ItemBind:Show() end
       RequiredLevel:SetText("")
       if not button.info.locked then
@@ -435,8 +427,6 @@ local PostUpdateButton = function(button)
     end
 
     -- Any other item.
-
-    if goldpawFrame then goldpawFrame:Show() end
     if ItemBind then ItemBind:Show() end
     RequiredLevel:SetText("")
     if not button.info.locked then
@@ -454,21 +444,33 @@ end
 
 
 
+local PostUpdateButtonWrapper = function(button)
+ 
+  -- Hide the goldpawFrame until after PostUpdateButton has had a chance
+  -- to hide the "BoE" text in it.
+  local goldpawFrame = _G[button:GetName().."ExtraInfoFrame"]
+  if goldpawFrame then goldpawFrame:Hide() end
+  PostUpdateButton(button)
+  if goldpawFrame then goldpawFrame:Show() end
+
+end
+
+
 Module.OnEnable = function()
-  hooksecurefunc(Bagnon.ItemSlot, "Update", PostUpdateButton)
+  hooksecurefunc(Bagnon.ItemSlot, "Update", PostUpdateButtonWrapper)
 
   -- Needed because otherwise UpdateUpgradeIcon will reset the VertexColor.
-  hooksecurefunc(Bagnon.ItemSlot, "UpdateUpgradeIcon", PostUpdateButton)
+  hooksecurefunc(Bagnon.ItemSlot, "UpdateUpgradeIcon", PostUpdateButtonWrapper)
 
   -- Needed to set the VertexColor in time when BAG_UPDATE_COOLDOWN is triggered.
-  hooksecurefunc(Bagnon.ItemSlot, "UpdateCooldown", PostUpdateButton)
+  hooksecurefunc(Bagnon.ItemSlot, "UpdateCooldown", PostUpdateButtonWrapper)
 
   -- Needed to keep the frame of unusable recipes.
-  hooksecurefunc(Bagnon.ItemSlot, "OnEnter", PostUpdateButton)
-  hooksecurefunc(Bagnon.ItemSlot, "OnLeave", PostUpdateButton)
+  hooksecurefunc(Bagnon.ItemSlot, "OnEnter", PostUpdateButtonWrapper)
+  hooksecurefunc(Bagnon.ItemSlot, "OnLeave", PostUpdateButtonWrapper)
 
   -- Needed to keep the desaturation.
-  hooksecurefunc(Bagnon.ItemSlot, "SetLocked", PostUpdateButton)
+  hooksecurefunc(Bagnon.ItemSlot, "SetLocked", PostUpdateButtonWrapper)
 
 end
 
