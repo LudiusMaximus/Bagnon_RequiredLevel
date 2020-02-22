@@ -4,7 +4,7 @@
 ## Notes: A simple Bagnon plugin that displays |nitems and recipes in red for which |nthe required character or skill level |nis not yet fulfilled. The required level |nis then displayed in the corner. |n(Based on "Bagnon ItemLevel" |nby Lars "Goldpaw" Norberg.)
 ## RequiredDeps: Bagnon
 ## OptionalDeps: Bagnon_BoE, Bagnon_ItemInfo
-## Version: 1.13
+## Version: 1.14
 ## X-Donate: PayPal:ludiusmaximus@gmail.com
 ## X-License: The MIT License (MIT)
 ## X-Category: Inventory

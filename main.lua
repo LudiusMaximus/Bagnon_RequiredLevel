@@ -98,7 +98,7 @@ local SetTooltip = function(itemSlot)
     if itemSlot:GetBag() == -1 then
       -- SetBagItem() does not work for bank slots. So we use this instead.
       -- (Thanks to p3lim: https://www.wowinterface.com/forums/showthread.php?p=331883)
-      scannerTooltip:SetInventoryItem('player', itemSlot:GetID()+47)
+      scannerTooltip:SetInventoryItem('player', itemSlot:GetID()+51)
     else
       scannerTooltip:SetBagItem(itemSlot:GetBag(), itemSlot:GetID())
     end
