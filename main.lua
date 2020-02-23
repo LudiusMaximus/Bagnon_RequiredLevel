@@ -87,6 +87,9 @@ local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelScannerToo
 scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
 
+
+local bankButtonIdOffset = BankButtonIDToInvSlotID(1) - 1
+
 -- Function to set the tooltip to the current item.
 local SetTooltip = function(itemSlot)
 
@@ -98,7 +101,7 @@ local SetTooltip = function(itemSlot)
     if itemSlot:GetBag() == -1 then
       -- SetBagItem() does not work for bank slots. So we use this instead.
       -- (Thanks to p3lim: https://www.wowinterface.com/forums/showthread.php?p=331883)
-      scannerTooltip:SetInventoryItem('player', itemSlot:GetID()+51)
+      scannerTooltip:SetInventoryItem('player', itemSlot:GetID() + bankButtonIdOffset)
     else
       scannerTooltip:SetBagItem(itemSlot:GetBag(), itemSlot:GetID())
     end
