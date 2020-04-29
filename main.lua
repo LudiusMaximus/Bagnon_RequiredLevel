@@ -157,9 +157,15 @@ end
 -- in order to extract and return the profession name.
 local CharacterHasProfession = function(itemSlot)
 
-  local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(itemSlot:GetItem())
+  -- We could also use the item link returned by itemSlot:GetItem() as
+  -- the argument for GetItemInfo() but we need itemId to check for
+  -- items with special treatment.
+  local itemId = tonumber(string_match(itemSlot:GetItem(), "^.-:(%d+):"))
+  local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(itemId)
 
-  if itemSubTypeId == LE_ITEM_RECIPE_BOOK then
+  -- "Design: Mass Prospect Empyrium" (152726) is falsely identified with itemSubType == "Inscription".
+  -- And for books we cannot get the profession at all, which is why we have to scan the tooltip.
+  if itemId == 152726 or itemSubTypeId == LE_ITEM_RECIPE_BOOK then
 
     SetTooltip(itemSlot)
 
