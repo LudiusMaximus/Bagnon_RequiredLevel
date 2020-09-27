@@ -473,20 +473,46 @@ end
 
 
 
-hooksecurefunc(Bagnon.ItemSlot, "Update", PostUpdateButtonWrapper)
 
--- Needed because otherwise UpdateUpgradeIcon will reset the VertexColor.
-hooksecurefunc(Bagnon.ItemSlot, "UpdateUpgradeIcon", PostUpdateButtonWrapper)
 
--- Needed to set the VertexColor in time when BAG_UPDATE_COOLDOWN is triggered.
-hooksecurefunc(Bagnon.ItemSlot, "UpdateCooldown", PostUpdateButtonWrapper)
 
--- Needed to keep the frame of unusable recipes.
-hooksecurefunc(Bagnon.ItemSlot, "OnEnter", PostUpdateButtonWrapper)
-hooksecurefunc(Bagnon.ItemSlot, "OnLeave", PostUpdateButtonWrapper)
 
--- Needed to keep the desaturation.
-hooksecurefunc(Bagnon.ItemSlot, "SetLocked", PostUpdateButtonWrapper)
+local item = Bagnon.ItemSlot or Bagnon.Item
+if item then
+
+  if item.Update then
+    hooksecurefunc(item, "Update", PostUpdateButtonWrapper)
+  end
+
+  -- Needed because otherwise UpdateUpgradeIcon will reset the VertexColor.
+  if item.UpdateUpgradeIcon then
+    hooksecurefunc(item, "UpdateUpgradeIcon", PostUpdateButtonWrapper)
+  end
+
+  -- Needed to set the VertexColor in time, when BAG_UPDATE_COOLDOWN is triggered.
+  if item.UpdateCooldown then
+    hooksecurefunc(item, "UpdateCooldown", PostUpdateButtonWrapper)
+  end
+
+  -- Needed to keep the frame of unusable recipes.
+  if item.OnEnter then
+    hooksecurefunc(item, "OnEnter", PostUpdateButtonWrapper)
+  end
+  if item.OnLeave then
+    hooksecurefunc(item, "OnLeave", PostUpdateButtonWrapper)
+  end
+
+  -- Needed to keep the desaturation.
+  if item.SetLocked then
+    hooksecurefunc(item, "SetLocked", PostUpdateButtonWrapper)
+  end
+
+end
+
+
+
+
+
 
 
 
