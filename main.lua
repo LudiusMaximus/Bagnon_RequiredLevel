@@ -232,6 +232,7 @@ moduleData.EP_PANDARIA = "5"
 moduleData.EP_WOD =      "6"
 moduleData.EP_LEGION =   "7"
 moduleData.EP_BFA =      "8"
+moduleData.EP_SL =       "9"
 
 
 
