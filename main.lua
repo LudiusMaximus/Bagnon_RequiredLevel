@@ -20,6 +20,9 @@ local GetProfessions = _G.GetProfessions
 local GetProfessionInfo = _G.GetProfessionInfo
 local UnitLevel = _G.UnitLevel
 
+local SpellBook_GetSpellBookSlot = _G.SpellBook_GetSpellBookSlot
+
+
 -- WoW Strings
 local ITEM_MIN_SKILL = _G.ITEM_MIN_SKILL
 local ITEM_SPELL_KNOWN = _G.ITEM_SPELL_KNOWN
@@ -373,7 +376,19 @@ local ReadRecipeTooltip = function(professionName, itemSlot)
   end
 
   -- Tooltip and scanning by Phanx (https://www.wowinterface.com/forums/showthread.php?p=270331#post270331)
-  for i = scannerTooltip:NumLines(), 2, -1 do
+
+  -- In classic we have to search from top to bottom, because the "Requires ingredients (amount)" line
+  -- is further below, which also matches our regular expression.
+  local start = scannerTooltip:NumLines()
+  local stop = 2
+  local incr = -1
+  if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+    start = 2
+    stop = scannerTooltip:NumLines()
+    incr = 1
+  end
+
+  for i = start, stop, incr do
     local line = _G[scannerTooltip:GetName().."TextLeft"..i]
     if line then
       local msg = line:GetText()
