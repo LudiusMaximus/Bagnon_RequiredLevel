@@ -31,6 +31,89 @@ local locale = GetLocale()
 
 
 
+-- For Classic there is not GetProfessions() so we have to scan the spell book for
+-- spells indicating that a profession was learned.
+local professionSpells = nil
+if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+  local learnedSpellEventFrame = CreateFrame("Frame")
+  learnedSpellEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+  learnedSpellEventFrame:RegisterEvent("LEARNED_SPELL_IN_TAB")
+  learnedSpellEventFrame:SetScript("OnEvent", SpellBookFrame_Update)
+
+  -- This table maps spell IDs (as returned by SpellBook_GetSpellBookSlot())
+  -- e.g. https://classic.wowhead.com/spell=818/basic-campfire
+  -- to profession subclassID (as returned by GetItemInfo()).
+  -- https://wowpedia.fandom.com/wiki/ItemType#9:_Recipe
+  -- Thus, you can check if the player knows a certain profession, which does not
+  -- seem to be possible otherwise in Classic, where there is no GetProfessions().
+  professionSpells = {
+
+     [2108] = 1, -- Leatherworking Apprentice
+     [3104] = 1, -- Leatherworking Journeyman
+     [3811] = 1, -- Leatherworking Expert
+    [10662] = 1, -- Leatherworking Artisan
+    [32549] = 1, -- Leatherworking Master (BC)
+
+     [3908] = 2, -- Tailoring Apprentice
+     [3909] = 2, -- Tailoring Journeyman
+     [3910] = 2, -- Tailoring Expert
+    [12180] = 2, -- Tailoring Artisan
+    [26790] = 2, -- Tailoring Master (BC)
+
+     [4036] = 3, -- Engineering Apprentice
+     [4037] = 3, -- Engineering Journeyman
+     [4038] = 3, -- Engineering Expert
+    [12656] = 3, -- Engineering Artisan
+    [30350] = 3, -- Engineering Master (BC)
+
+     [2018] = 4, -- Blacksmithing Apprentice
+     [3100] = 4, -- Blacksmithing Journeyman
+     [3538] = 4, -- Blacksmithing Expert
+     [9785] = 4, -- Blacksmithing Artisan
+    [29844] = 4, -- Blacksmithing Master (BC)
+
+      [818] = 5, -- Basic Campfire (Cooking)
+
+     [2259] = 6, -- Alchemy Apprentice
+     [3101] = 6, -- Alchemy Journeyman
+     [3464] = 6, -- Alchemy Expert
+    [11611] = 6, -- Alchemy Artisan
+    [28596] = 6, -- Alchemy Master (BC)
+
+     [3273] = 7, -- First Aid Apprentice
+     [3274] = 7, -- First Aid Journeyman
+     [7924] = 7, -- First Aid Expert
+    [10846] = 7, -- First Aid Artisan
+    [27028] = 7, -- First Aid Master (BC)
+
+     [7411] = 8, -- Enchanting Apprentice
+     [7412] = 8, -- Enchanting Journeyman
+     [7413] = 8, -- Enchanting Expert
+    [13920] = 8, -- Enchanting Artisan
+    [28029] = 8, -- Enchanting Master (BC)
+
+     [7620] = 9, -- Fishing Apprentice
+     [7731] = 9, -- Fishing Journeyman
+     [7732] = 9, -- Fishing Expert
+    [18248] = 9, -- Fishing Artisan
+    [33095] = 9, -- Fishing Master (BC)
+
+    [25229] = 10, -- Jewelcrafting Apprentice
+    [25230] = 10, -- Jewelcrafting Journeyman
+    [28894] = 10, -- Jewelcrafting Expert
+    [28895] = 10, -- Jewelcrafting Artisan
+    [28897] = 10, -- Jewelcrafting Master (BC)
+
+    -- No Inscription as of BCC.
+
+    -- We are only interested in professions with recipes
+    -- so no gathering skills here!
+  }
+
+end
+
+
+
 -- Retrieve an itemSlot's plugin container.
 local GetPluginContainter = function(itemSlot)
   local name = itemSlot:GetName() .. "RequiredLevelFrame"
@@ -163,6 +246,27 @@ local CharacterHasProfession = function(itemSlot)
   local itemId = tonumber(string_match(itemSlot:GetItem(), "^.-:(%d+):"))
   local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(itemId)
 
+
+  -- For Classic there is not GetProfessions() so we have to scan the spell book for
+  -- spells indicating that a profession was learned.
+  if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+
+    for i = 1, 24 do
+      if _G["SpellButton" .. i] then
+        local slot, slotType, slotID = SpellBook_GetSpellBookSlot(_G["SpellButton" .. i])
+        if slot then
+          -- print(slot, slotType, slotID, GetSpellBookItemName(slot, SpellBookFrame.bookType))
+          if professionSpells[slotID] == itemSubTypeId then
+            return true, itemSubType
+          end
+        end
+      end
+    end
+
+    return false, nil
+  end
+
+
   -- "Design: Mass Prospect Empyrium" (152726) is falsely identified with itemSubType == "Inscription".
   -- And for books we cannot get the profession at all, which is why we have to scan the tooltip.
   if itemId == 152726 or itemSubTypeId == LE_ITEM_RECIPE_BOOK then
@@ -251,7 +355,9 @@ local ReadRecipeTooltip = function(professionName, itemSlot)
   local searchOnlySkillPattern = nil
 
   -- If the locale is not known, just search for the required skill and ignore the expansion.
-  if not moduleData.itemMinSkillString[locale] or not moduleData.expansionIdentifierToVersionNumber[locale] then
+  -- The same, if we are in Classic or BCC, because there were no expansion specific profession levels then.
+  if not moduleData.itemMinSkillString[locale] or not moduleData.expansionIdentifierToVersionNumber[locale]
+      or WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
     searchOnlySkillPattern = "^.*%((%d+)%).*$"
   else
     -- ITEM_MIN_SKILL = "Requires %s (%d)"
