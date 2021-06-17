@@ -437,41 +437,116 @@ local PostUpdateButton = function(itemSlot)
 
   local itemLink = itemSlot:GetItem()
   if itemLink then
+  
+    local item = Item:CreateFromItemLink(itemLink)
+    item:ContinueOnItemLoad(function()
 
-    -- Locked items should always be greyed out.
-    if itemSlot.info.locked then
-      local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
-      buttonIconTexture:SetVertexColor(1,1,1)
-      buttonIconTexture:SetDesaturated(1)
-    end
+      -- Locked items should always be greyed out.
+      if itemSlot.info.locked then
+        local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+        buttonIconTexture:SetVertexColor(1,1,1)
+        buttonIconTexture:SetDesaturated(1)
+      end
 
-    -- Retrieve or create this itemSlot's RequiredLevel text.
-    local RequiredLevel = Cache_RequiredLevel[itemSlot] or Cache_GetRequiredLevel(itemSlot)
-    -- Got to set a default font.
-    RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
+      -- Retrieve or create this itemSlot's RequiredLevel text.
+      local RequiredLevel = Cache_RequiredLevel[itemSlot] or Cache_GetRequiredLevel(itemSlot)
+      -- Got to set a default font.
+      RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
 
-    -- Get some blizzard info about the current item.
-    local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(itemLink)
-
-
-    -- Get Goldpaw's "BoE" text and hide it, if it exists.
-    -- It will be shown later if not replaced by "required level" text.
-    local ItemBind = nil
-    if _G[itemSlot:GetName().."ExtraInfoFrame"] then
-      ItemBind = Cache_ItemBind[itemSlot] or Cache_GetItemBind(itemSlot)
-      if ItemBind then ItemBind:Hide() end
-    end
+      -- Get some blizzard info about the current item.
+      local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(itemLink)
 
 
-    -- Check for Junkboxes and Lockboxes (Miscellaneous Junk).
-    if itemTypeId == 15 and itemSubTypeId == 0 then
-      local itemNeedsLockpicking, notEnoughSkill, requiredSkill = ItemNeedsLockpicking(itemSlot)
+      -- Get Goldpaw's "BoE" text and hide it, if it exists.
+      -- It will be shown later if not replaced by "required level" text.
+      local ItemBind = nil
+      if _G[itemSlot:GetName().."ExtraInfoFrame"] then
+        ItemBind = Cache_ItemBind[itemSlot] or Cache_GetItemBind(itemSlot)
+        if ItemBind then ItemBind:Hide() end
+      end
 
-      if itemNeedsLockpicking then
+
+      -- Check for Junkboxes and Lockboxes (Miscellaneous Junk).
+      if itemTypeId == 15 and itemSubTypeId == 0 then
+        local itemNeedsLockpicking, notEnoughSkill, requiredSkill = ItemNeedsLockpicking(itemSlot)
+
+        if itemNeedsLockpicking then
+          if notEnoughSkill then
+
+            RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
+            RequiredLevel:SetText(requiredSkill)
+
+            if not itemSlot.info.locked then
+              local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+              buttonIconTexture:SetVertexColor(1,.3,.3)
+              buttonIconTexture:SetDesaturated(1)
+            end
+            return
+          end
+        end
+      end
+
+
+      if itemMinLevel then
+        if itemMinLevel > UnitLevel("player") then
+
+          if not Unfit:IsItemUnusable(itemLink) then
+            RequiredLevel:SetText(itemMinLevel)
+            if not itemSlot.info.locked then
+              local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+              buttonIconTexture:SetVertexColor(1,.3,.3)
+              buttonIconTexture:SetDesaturated(1)
+            end
+          else
+            if ItemBind then ItemBind:Show() end
+          end
+          return
+        end
+      end
+
+      -- LE_ITEM_CLASS_RECIPE by Kanegasi (https://www.wowinterface.com/forums/showthread.php?p=330514#post330514)
+      if itemTypeId == LE_ITEM_CLASS_RECIPE then
+
+        -- For almost all recipes, itemSubType is also the profession name.
+        -- https://wow.gamepedia.com/ItemType
+        -- However, for "Book" recipes we have to extract the profession name from
+        -- the tooltip. We do this at the same time as checking if the player has
+        -- the profession at all. Thus, we only have to scan the tooltip for the professions
+        -- the player has.
+        local hasProfession, professionName = CharacterHasProfession(itemSlot)
+
+        if not hasProfession then
+          if ItemBind then ItemBind:Show() end
+          RequiredLevel:SetText("")
+          if Addon.sets.glowUnusable then
+            r, g, b = RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b
+            itemSlot.IconBorder:SetTexture(id and C_ArtifactUI.GetRelicInfoByItemID(id) and 'Interface\\Artifacts\\RelicIconFrame' or 'Interface\\Common\\WhiteIconFrame')
+            itemSlot.IconBorder:SetVertexColor(r, g, b)
+            itemSlot.IconBorder:SetShown(r)
+            itemSlot.IconGlow:SetVertexColor(r, g, b, Addon.sets.glowAlpha)
+            itemSlot.IconGlow:SetShown(r)
+          end
+          return
+        end
+
+        -- Scan tooltip. (Not checking for itemSubTypeId != LE_ITEM_RECIPE_BOOK here because of efficiency.)
+        local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, itemSlot)
+
+        if alreadyKnown then
+          if ItemBind then ItemBind:Show() end
+          RequiredLevel:SetText("")
+          if not itemSlot.info.locked then
+            local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+            buttonIconTexture:SetVertexColor(.4,.4,.4)
+            buttonIconTexture:SetDesaturated(1)
+          end
+          return
+        end
+
         if notEnoughSkill then
 
           RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
-          RequiredLevel:SetText(requiredSkill)
+          RequiredLevel:SetText(expansionPrefix .. requiredSkill)
 
           if not itemSlot.info.locked then
             local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
@@ -480,80 +555,19 @@ local PostUpdateButton = function(itemSlot)
           end
           return
         end
-      end
-    end
 
-
-    if itemMinLevel then
-      if itemMinLevel > UnitLevel("player") then
-
-        if not Unfit:IsItemUnusable(itemLink) then
-          RequiredLevel:SetText(itemMinLevel)
-          if not itemSlot.info.locked then
-            local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
-            buttonIconTexture:SetVertexColor(1,.3,.3)
-            buttonIconTexture:SetDesaturated(1)
-          end
-        else
-          if ItemBind then ItemBind:Show() end
-        end
-        return
-      end
-    end
-
-    -- LE_ITEM_CLASS_RECIPE by Kanegasi (https://www.wowinterface.com/forums/showthread.php?p=330514#post330514)
-    if itemTypeId == LE_ITEM_CLASS_RECIPE then
-
-      -- For almost all recipes, itemSubType is also the profession name.
-      -- https://wow.gamepedia.com/ItemType
-      -- However, for "Book" recipes we have to extract the profession name from
-      -- the tooltip. We do this at the same time as checking if the player has
-      -- the profession at all. Thus, we only have to scan the tooltip for the professions
-      -- the player has.
-      local hasProfession, professionName = CharacterHasProfession(itemSlot)
-
-      if not hasProfession then
-        if ItemBind then ItemBind:Show() end
-        RequiredLevel:SetText("")
-        if Addon.sets.glowUnusable then
-          r, g, b = RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b
-          itemSlot.IconBorder:SetTexture(id and C_ArtifactUI.GetRelicInfoByItemID(id) and 'Interface\\Artifacts\\RelicIconFrame' or 'Interface\\Common\\WhiteIconFrame')
-          itemSlot.IconBorder:SetVertexColor(r, g, b)
-          itemSlot.IconBorder:SetShown(r)
-          itemSlot.IconGlow:SetVertexColor(r, g, b, Addon.sets.glowAlpha)
-          itemSlot.IconGlow:SetShown(r)
-        end
-        return
-      end
-
-      -- Scan tooltip. (Not checking for itemSubTypeId != LE_ITEM_RECIPE_BOOK here because of efficiency.)
-      local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, itemSlot)
-
-      if alreadyKnown then
+        -- Recipe is actually learnable.
         if ItemBind then ItemBind:Show() end
         RequiredLevel:SetText("")
         if not itemSlot.info.locked then
           local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
-          buttonIconTexture:SetVertexColor(.4,.4,.4)
-          buttonIconTexture:SetDesaturated(1)
+          buttonIconTexture:SetVertexColor(1,1,1)
+          buttonIconTexture:SetDesaturated(nil)
         end
         return
       end
 
-      if notEnoughSkill then
-
-        RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
-        RequiredLevel:SetText(expansionPrefix .. requiredSkill)
-
-        if not itemSlot.info.locked then
-          local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
-          buttonIconTexture:SetVertexColor(1,.3,.3)
-          buttonIconTexture:SetDesaturated(1)
-        end
-        return
-      end
-
-      -- Recipe is actually learnable.
+      -- Any other item.
       if ItemBind then ItemBind:Show() end
       RequiredLevel:SetText("")
       if not itemSlot.info.locked then
@@ -561,18 +575,8 @@ local PostUpdateButton = function(itemSlot)
         buttonIconTexture:SetVertexColor(1,1,1)
         buttonIconTexture:SetDesaturated(nil)
       end
-      return
-    end
-
-    -- Any other item.
-    if ItemBind then ItemBind:Show() end
-    RequiredLevel:SetText("")
-    if not itemSlot.info.locked then
-      local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
-      buttonIconTexture:SetVertexColor(1,1,1)
-      buttonIconTexture:SetDesaturated(nil)
-    end
-
+    end)
+    
   else
     if Cache_RequiredLevel[itemSlot] then
       Cache_RequiredLevel[itemSlot]:SetText("")
