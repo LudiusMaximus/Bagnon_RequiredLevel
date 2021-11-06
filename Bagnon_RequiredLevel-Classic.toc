@@ -1,4 +1,4 @@
-## Interface: 11307
+## Interface: 11400
 ## Version: @project-version@
 ## Title: Bagnon RequiredLevel
 ## Author: LudiusMaximus
