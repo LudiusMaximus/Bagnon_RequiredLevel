@@ -34,14 +34,55 @@ local locale = GetLocale()
 
 
 
--- For Classic there is not GetProfessions() so we have to scan the spell book for
+
+-- Very cool trick by MunkDev: https://www.wowinterface.com/forums/showthread.php?p=325688#post325688
+local function StopLastSound()
+  -- Play some sound to get a handle.
+  local _, handle = PlaySound(SOUNDKIT[next(SOUNDKIT)], "SFX", false)
+  if handle then
+    -- print("muting sound", handle)
+    -- Stop this sound and the previous.
+    StopSound(handle-1)
+    StopSound(handle)
+  end
+end
+
+
+
+-- For Classic there is no GetProfessions() so we have to scan the spell book for
 -- spells indicating that a profession was learned.
 local professionSpells = nil
 if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+  
+  -- For the SpellButton frames to be available even before the SpellBook has been opened by a player,
+  -- I need to open it silently.
   local learnedSpellEventFrame = CreateFrame("Frame")
   learnedSpellEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-  learnedSpellEventFrame:RegisterEvent("LEARNED_SPELL_IN_TAB")
-  learnedSpellEventFrame:SetScript("OnEvent", SpellBookFrame_Update)
+  -- Listening to LEARNED_SPELL_IN_TAB should not be necessary, because SpellBookFrame itself
+  -- listens to it and calls SpellBookFrame_Update() then.
+  learnedSpellEventFrame:SetScript("OnEvent", function()
+  
+        -- Calling SpellBookFrame_Update() would be enough, but it spreads taint over the spellbook.
+        -- ToggleSpellBook() ToggleSpellBook() is also not possible for some reason.
+        -- But SpellBookFrame:Show() SpellBookFrame:Hide() works.
+        if not SpellBookFrame:IsShown() then
+          SpellBookFrame:Show()
+          StopLastSound()
+          SpellBookFrame:Hide()
+          StopLastSound()
+        end
+        
+        -- -- For testing:
+        -- for i = 1, 24 do
+          -- if _G["SpellButton" .. i] then
+            -- print(i, _G["SpellButton" .. i])
+            -- local slot, slotType, slotID = SpellBook_GetSpellBookSlot(_G["SpellButton" .. i])
+            -- if slot then
+              -- print(slot, slotType, slotID)
+            -- end
+          -- end
+        -- end
+    end)
 
   -- This table maps spell IDs (as returned by SpellBook_GetSpellBookSlot())
   -- e.g. https://classic.wowhead.com/spell=818/basic-campfire
@@ -250,7 +291,7 @@ local CharacterHasProfession = function(itemSlot)
   local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(itemId)
 
 
-  -- For Classic there is not GetProfessions() so we have to scan the spell book for
+  -- For Classic there is no GetProfessions() so we have to scan the spell book for
   -- spells indicating that a profession was learned.
   if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
 
