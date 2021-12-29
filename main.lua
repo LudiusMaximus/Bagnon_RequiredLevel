@@ -282,12 +282,17 @@ end
 -- Function to return if the character has a certain profession.
 -- For "Book" recipes we have to scan the tooltip
 -- in order to extract and return the profession name.
-local CharacterHasProfession = function(itemSlot)
+-- 
+-- For testing we allow the function call with itemId only and itemSlot == nil.
+local CharacterHasProfession = function(itemSlot, itemId)
 
-  -- We could also use the item link returned by itemSlot:GetItem() as
-  -- the argument for GetItemInfo() but we need itemId to check for
-  -- items with special treatment.
-  local itemId = tonumber(string_match(itemSlot:GetItem(), "^.-:(%d+):"))
+  if not itemId then
+    -- We could also use the item link returned by itemSlot:GetItem() as
+    -- the argument for GetItemInfo() but we need itemId to check for
+    -- items with special treatment.
+    itemId = tonumber(string_match(itemSlot:GetItem(), "^.-:(%d+):"))
+  end
+  
   local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(itemId)
 
 
@@ -315,7 +320,13 @@ local CharacterHasProfession = function(itemSlot)
   -- And for books we cannot get the profession at all, which is why we have to scan the tooltip.
   if itemId == 152726 or itemSubTypeId == LE_ITEM_RECIPE_BOOK then
 
-    SetTooltip(itemSlot)
+    if itemSlot then
+      SetTooltip(itemSlot)
+    else
+      -- If this was called for testing with itemId only.
+      scannerTooltip:ClearLines()
+      scannerTooltip:SetHyperlink("item:" .. itemId .. ":0:0:0:0:0:0:0")
+    end
 
     -- Cannot do "for .. in ipairs", because if one profession is missing,
     -- the iteration would stop...
@@ -347,7 +358,25 @@ local CharacterHasProfession = function(itemSlot)
       end
     end
 
-    return false, nil
+    -- Check if this is a book without any profession.
+    -- Like e.g. "Rockin' Rollin' Racer Pack" (187560).
+    -- (searchPattern is the same as above but with .- instead of professionName) 
+    searchPattern = string_gsub(string_gsub("^" .. ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", ".-%%s"), "%(%%.-d%)%s?", ".-")
+    for i = scannerTooltip:NumLines(), 2, -1 do
+      local line = _G[scannerTooltip:GetName().."TextLeft"..i]
+      if line then
+        local msg = line:GetText()
+        if msg then
+          -- This book actually has a profession, which the character does not know.
+          if string_find(msg, searchPattern) then
+            return false, nil
+          end
+        end
+      end
+    end
+
+    -- This book has no profession.
+    return true, nil
 
   -- For all other recipes, itemSubType is also the profession name.
   else
@@ -570,6 +599,11 @@ local PostUpdateButton = function(itemSlot)
             end
             return
           end
+          
+          if not professionName then
+            -- print("This was a book without profession!")
+            return
+          end
 
           -- Scan tooltip. (Not checking for itemSubTypeId != LE_ITEM_RECIPE_BOOK here because of efficiency.)
           local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, itemSlot)
@@ -681,6 +715,43 @@ end
 
 
 
+
+
+
+
+-- -- To test CharacterHasProfession() on items by item id:
+-- local testframe1 = CreateFrame("Frame", _, UIParent, BackdropTemplateMixin and "BackdropTemplate")
+-- testframe1:SetBackdrop({ bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+                      -- edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
+                      -- tile = true, tileSize = 16, edgeSize = 16,
+                      -- insets = { left = 4, right = 4, top = 4, bottom = 4 }})
+-- testframe1:SetBackdropColor(0.0, 0.0, 0.0, 1.0)
+-- testframe1:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+
+-- testframe1:SetWidth(300)
+-- testframe1:SetHeight(100)
+
+-- testframe1:SetMovable(true)
+-- testframe1:EnableMouse(true)
+-- testframe1:RegisterForDrag("LeftButton")
+-- testframe1:SetScript("OnDragStart", testframe1.StartMoving)
+-- testframe1:SetScript("OnDragStop", testframe1.StopMovingOrSizing)
+-- testframe1:SetClampedToScreen(true)
+
+-- testframe1:SetScript("OnEnter", function()
+  
+  -- -- local itemId = 34109    -- Weather-Beaten Journal (Fishing book).
+  -- -- local itemId = 45912    -- Book of Glyph Mastery (Inscription book).
+  -- local itemId = 187560   -- Rockin' Rollin' Racer Pack (book without profession).
+   
+  -- print(CharacterHasProfession(nil, itemId))
+
+  -- -- Just for visual inspection of the tooltip.
+  -- GameTooltip:SetOwner(testframe1, "ANCHOR_TOPLEFT")
+  -- GameTooltip:SetHyperlink("item:" .. itemId .. ":0:0:0:0:0:0:0")
+  -- GameTooltip:Show()
+  
+-- end )
 
 
 
