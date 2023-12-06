@@ -164,7 +164,7 @@ if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
     [45360] = 11, -- Inscription Artisan
     [45361] = 11, -- Inscription Master (BC)
     [45363] = 11, -- Inscription Grand Master (Wrath)
-    
+
     -- We are only interested in professions with recipes
     -- so no gathering skills here!
   }
@@ -179,7 +179,7 @@ local cachedRequiredLevelLabels = {}
 local GetRequiredLevelLabel = function(bagnonItem)
 
   if not cachedRequiredLevelLabels[bagnonItem] then
-  
+
     -- Storing frames globally. Not sure why this is done, but I trust Goldpaw who does it like that.
     local requiredLevelFrameName = bagnonItem:GetName() .. "RequiredLevelFrame"
     local requiredLevelFrame = _G[requiredLevelFrameName]
@@ -188,7 +188,7 @@ local GetRequiredLevelLabel = function(bagnonItem)
       requiredLevelFrame = CreateFrame("Frame", requiredLevelFrameName, bagnonItem)
       requiredLevelFrame:SetAllPoints()
     end
-  
+
      -- Using standard blizzard fonts here
     local requiredLevelFrameString = requiredLevelFrame:CreateFontString()
     requiredLevelFrameString:SetDrawLayer("ARTWORK", 1)
@@ -238,11 +238,9 @@ local bankButtonIdOffset = BankButtonIDToInvSlotID(1) - 1
 -- Function to set the tooltip to the current item.
 local SetTooltip = function(bagnonItem)
 
-  -- Clear the tooltip.
-  scannerTooltip:ClearLines()
-
   if not bagnonItem:IsCached() then
 
+    scannerTooltip:ClearLines()
     if bagnonItem:GetBag() == -1 then
       -- SetBagItem() does not work for bank slots. So we use this instead.
       -- (Thanks to p3lim: https://www.wowinterface.com/forums/showthread.php?p=331883)
@@ -251,18 +249,13 @@ local SetTooltip = function(bagnonItem)
       scannerTooltip:SetBagItem(bagnonItem:GetBag(), bagnonItem:GetID())
     end
 
-    -- If the above fails for some reason, we will do SetHyperlink(), too.
+    -- If the above fails for some reason, we fall back to the cached variant below.
     if scannerTooltip:NumLines() > 0 then return end
 
   end
 
-  -- The above is not executed for cached items; like bank slots while not
-  -- at the bank or bags of other characters. In this case we use
-  -- SetHyperlink(), which may sometimes not capture all stats of bagnonItem
-  -- of which there are different versions.
-
   scannerTooltip:ClearLines()
-  scannerTooltip:SetHyperlink(bagnonItem.info.hyperlink)
+  scannerTooltip:SetItemByID(bagnonItem.info.itemID)
 
 end
 
@@ -303,14 +296,12 @@ end
 -- For "Book" recipes we have to scan the tooltip
 -- in order to extract and return the profession name.
 --
--- For testing we allow the function call with itemId only and bagnonItem == nil.
+-- The second argument is just for testing, where we allow the function call
+-- with itemId only and bagnonItem == nil.
 local CharacterHasProfession = function(bagnonItem, itemId)
 
   if not itemId then
-    -- We could also use the item link of bagnonItem.info.hyperlink as
-    -- the argument for GetItemInfo() but we need itemId to check for
-    -- items with special treatment.
-    itemId = tonumber(string_match(bagnonItem.info.hyperlink, "^.-:(%d+):"))
+    itemId = bagnonItem.info.itemID
   end
 
   local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(itemId)
@@ -345,7 +336,7 @@ local CharacterHasProfession = function(bagnonItem, itemId)
     else
       -- If this was called for testing with itemId only.
       scannerTooltip:ClearLines()
-      scannerTooltip:SetHyperlink("item:" .. itemId .. ":0:0:0:0:0:0:0")
+      scannerTooltip:SetItemByID(itemId)
     end
 
     -- Cannot do "for .. in ipairs", because if one profession is missing,
@@ -543,11 +534,9 @@ end
 
 local PostUpdateButton = function(bagnonItem)
 
-  if bagnonItem and bagnonItem.info and bagnonItem.info.hyperlink then
+  if bagnonItem and bagnonItem.info and bagnonItem.info.itemID then
 
-    local itemLink = bagnonItem.info.hyperlink
-
-    local item = Item:CreateFromItemLink(itemLink)
+    local item = Item:CreateFromItemID(bagnonItem.info.itemID)
     if not item:IsItemEmpty() then
       item:ContinueOnItemLoad(function()
 
@@ -564,7 +553,7 @@ local PostUpdateButton = function(bagnonItem)
         requiredLevelLabel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
 
         -- Get some blizzard info about the current item.
-        local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(itemLink)
+        local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(bagnonItem.info.itemID)
 
 
         -- Get Goldpaw's "BoE" text and hide it, if it exists.
@@ -595,7 +584,7 @@ local PostUpdateButton = function(bagnonItem)
 
 
         if itemMinLevel and itemMinLevel > UnitLevel("player") then
-          if not Unfit:IsItemUnusable(itemLink) then
+          if not Unfit:IsItemUnusable(bagnonItem.info.itemID) then
             requiredLevelLabel:SetText(itemMinLevel)
             if not bagnonItem.info.locked then
               local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
@@ -716,7 +705,7 @@ end
 -- - Bagnon.ContainerItem is for retail. If I use Bagnon.Item instead,
 --   there are no UpdateCooldown and UpdateLocked functions to hook,
 --   which I need to keep my colour modifications of the icons.
-local item = Bagnon.ContainerItem 
+local item = Bagnon.ContainerItem
 
 if item then
 
@@ -746,9 +735,6 @@ end
 
 
 
-
-
-
 -- -- To test CharacterHasProfession() on items by item id:
 -- local testframe1 = CreateFrame("Frame", _, UIParent, BackdropTemplateMixin and "BackdropTemplate")
 -- testframe1:SetBackdrop({ bgFile = "Interface/Tooltips/UI-Tooltip-Background",
@@ -770,15 +756,15 @@ end
 
 -- testframe1:SetScript("OnEnter", function()
 
-  -- -- local itemId = 34109    -- Weather-Beaten Journal (Fishing book).
+  -- local itemId = 34109    -- Weather-Beaten Journal (Fishing book).
   -- -- local itemId = 45912    -- Book of Glyph Mastery (Inscription book).
-  -- local itemId = 187560   -- Rockin' Rollin' Racer Pack (book without profession).
+  -- -- local itemId = 187560   -- Rockin' Rollin' Racer Pack (book without profession).
 
   -- print(CharacterHasProfession(nil, itemId))
 
   -- -- Just for visual inspection of the tooltip.
   -- GameTooltip:SetOwner(testframe1, "ANCHOR_TOPLEFT")
-  -- GameTooltip:SetHyperlink("item:" .. itemId .. ":0:0:0:0:0:0:0")
+  -- GameTooltip:SetItemByID(itemId)
   -- GameTooltip:Show()
 
 -- end )
