@@ -1,7 +1,7 @@
 -- Using the Bagnon way to retrieve names, namespaces and stuff
 local MODULE, moduleData =  ...
-local ADDON, Addon = MODULE:match("[^_]+"), _G[MODULE:match("[^_]+")]
-local Module = Bagnon:NewModule("RequiredLevel", Addon)
+local Addon = _G[MODULE:match("[^_]+")]
+Bagnon:NewModule("RequiredLevel", Addon)
 
 local Unfit = LibStub('Unfit-1.0')
 
@@ -26,8 +26,6 @@ local SpellBook_GetSpellBookSlot = _G.SpellBook_GetSpellBookSlot
 -- WoW Strings
 local ITEM_MIN_SKILL = _G.ITEM_MIN_SKILL
 local ITEM_SPELL_KNOWN = _G.ITEM_SPELL_KNOWN
-local LE_ITEM_CLASS_RECIPE = _G.LE_ITEM_CLASS_RECIPE
-local LE_ITEM_RECIPE_BOOK = _G.LE_ITEM_RECIPE_BOOK
 
 
 local locale = GetLocale()
@@ -35,25 +33,24 @@ local locale = GetLocale()
 
 
 
--- Very cool trick by MunkDev: https://www.wowinterface.com/forums/showthread.php?p=325688#post325688
-local function StopLastSound()
-  -- Play some sound to get a handle.
-  local _, handle = PlaySound(SOUNDKIT[next(SOUNDKIT)], "SFX", false)
-  if handle then
-    -- print("muting sound", handle)
-    -- Stop this sound and the previous.
-    StopSound(handle-1)
-    StopSound(handle)
-  end
-end
-
-
-
 -- For Classic there is no GetProfessions() so we have to scan the spell book for
 -- spells indicating that a profession was learned.
 local professionSpells = nil
 if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
-  
+
+  -- Very cool trick by MunkDev: https://www.wowinterface.com/forums/showthread.php?p=325688#post325688
+  local function StopLastSound()
+    -- Play some sound to get a handle.
+    local _, handle = PlaySound(SOUNDKIT[next(SOUNDKIT)], "SFX", false)
+    if handle then
+      -- print("muting sound", handle)
+      -- Stop this sound and the previous.
+      StopSound(handle-1)
+      StopSound(handle)
+    end
+  end
+
+
   -- For the SpellButton frames to be available even before the SpellBook has been opened by a player,
   -- I need to open it silently.
   local learnedSpellEventFrame = CreateFrame("Frame")
@@ -61,28 +58,29 @@ if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNIN
   -- Listening to LEARNED_SPELL_IN_TAB should not be necessary, because SpellBookFrame itself
   -- listens to it and calls SpellBookFrame_Update() then.
   learnedSpellEventFrame:SetScript("OnEvent", function()
-  
-        -- Calling SpellBookFrame_Update() would be enough, but it spreads taint over the spellbook.
-        -- ToggleSpellBook() ToggleSpellBook() is also not possible for some reason.
-        -- But SpellBookFrame:Show() SpellBookFrame:Hide() works.
-        if not SpellBookFrame:IsShown() then
-          SpellBookFrame:Show()
-          StopLastSound()
-          SpellBookFrame:Hide()
-          StopLastSound()
-        end
-        
-        -- -- For testing:
-        -- for i = 1, 24 do
-          -- if _G["SpellButton" .. i] then
-            -- print(i, _G["SpellButton" .. i])
-            -- local slot, slotType, slotID = SpellBook_GetSpellBookSlot(_G["SpellButton" .. i])
-            -- if slot then
-              -- print(slot, slotType, slotID)
-            -- end
-          -- end
+
+    -- Calling SpellBookFrame_Update() would be enough, but it spreads taint over the spellbook.
+    -- ToggleSpellBook() ToggleSpellBook() is also not possible for some reason.
+    -- But SpellBookFrame:Show() SpellBookFrame:Hide() works.
+    if not SpellBookFrame:IsShown() then
+      SpellBookFrame:Show()
+      StopLastSound()
+      SpellBookFrame:Hide()
+      StopLastSound()
+    end
+
+    -- -- For testing:
+    -- for i = 1, 24 do
+      -- if _G["SpellButton" .. i] then
+        -- print(i, _G["SpellButton" .. i])
+        -- local slot, slotType, slotID = SpellBook_GetSpellBookSlot(_G["SpellButton" .. i])
+        -- if slot then
+          -- print(slot, slotType, slotID)
         -- end
-    end)
+      -- end
+    -- end
+
+  end)
 
   -- This table maps spell IDs (as returned by SpellBook_GetSpellBookSlot())
   -- e.g. https://classic.wowhead.com/spell=818/basic-campfire
@@ -158,79 +156,82 @@ end
 
 
 
--- Retrieve an itemSlot's plugin container.
-local GetPluginContainter = function(itemSlot)
-  local name = itemSlot:GetName() .. "RequiredLevelFrame"
-  local frame = _G[name]
-  if (not frame) then
-    -- Adding an extra layer to get it above glow and border textures.
-    frame = CreateFrame("Frame", name, itemSlot)
-    frame:SetAllPoints()
+
+-- Cache of our own RequiredLevel labels for quick access.
+local cachedRequiredLevelLabels = {}
+local GetRequiredLevelLabel = function(bagnonItem)
+
+  if not cachedRequiredLevelLabels[bagnonItem] then
+  
+    -- Storing frames globally. Not sure why this is done, but I trust Goldpaw who does it like that.
+    local requiredLevelFrameName = bagnonItem:GetName() .. "RequiredLevelFrame"
+    local requiredLevelFrame = _G[requiredLevelFrameName]
+    if (not requiredLevelFrame) then
+      -- Adding an extra layer to get it above glow and border textures.
+      requiredLevelFrame = CreateFrame("Frame", requiredLevelFrameName, bagnonItem)
+      requiredLevelFrame:SetAllPoints()
+    end
+  
+     -- Using standard blizzard fonts here
+    local requiredLevelFrameString = requiredLevelFrame:CreateFontString()
+    requiredLevelFrameString:SetDrawLayer("ARTWORK", 1)
+    requiredLevelFrameString:SetPoint("BOTTOMLEFT", 2, 2)
+    requiredLevelFrameString:SetTextColor(.95, .95, .95)
+
+    cachedRequiredLevelLabels[bagnonItem] = requiredLevelFrameString
   end
-  return frame
+
+  return cachedRequiredLevelLabels[bagnonItem]
 end
 
 
 
 
--- Cache of ItemBind texts (Goldpaw's Bagnon_BoE).
-local Cache_ItemBind = {}
-local Cache_GetItemBind = function(itemSlot)
-  local goldpawFrame = _G[itemSlot:GetName().."ExtraInfoFrame"]
-  if goldpawFrame then
-    for _, child in ipairs({goldpawFrame:GetRegions()}) do
-      if child:IsObjectType("FontString") then
-        local text = child:GetText()
-        if text == "BoE" or text == "BoU" then
-          Cache_ItemBind[itemSlot] = child
-          return Cache_ItemBind[itemSlot]
+-- Cache of Goldpaw's ItemBind labels for quick access.
+-- Because we want to hide them when we show our RequiredLevel labels.
+local cachedItemBindLabels = {}
+local GetItemBindLabel = function(bagnonItem)
+  if not cachedItemBindLabels[bagnonItem] then
+    local goldpawFrame = _G[bagnonItem:GetName().."ExtraInfoFrame"]
+    if goldpawFrame then
+      for _, child in ipairs({goldpawFrame:GetRegions()}) do
+        if child:IsObjectType("FontString") then
+          local text = child:GetText()
+          if text == "BoE" or text == "BoU" then
+            cachedItemBindLabels[bagnonItem] = child
+          end
         end
       end
     end
   end
+  return cachedItemBindLabels[bagnonItem]
 end
 
 
 
 
--- Cache of RequiredLevel texts.
-local Cache_RequiredLevel = {}
-local Cache_GetRequiredLevel = function(itemSlot)
-
-  -- Using standard blizzard fonts here
-  local RequiredLevel = GetPluginContainter(itemSlot):CreateFontString()
-  RequiredLevel:SetDrawLayer("ARTWORK", 1)
-  RequiredLevel:SetPoint("BOTTOMLEFT", 2, 2)
-  RequiredLevel:SetTextColor(.95, .95, .95)
-
-  Cache_RequiredLevel[itemSlot] = RequiredLevel
-
-  return RequiredLevel
-end
 
 
 -- Tooltip used for scanning.
 local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelScannerTooltip", nil, "GameTooltipTemplate")
 scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
-
-
 local bankButtonIdOffset = BankButtonIDToInvSlotID(1) - 1
 
 -- Function to set the tooltip to the current item.
-local SetTooltip = function(itemSlot)
+local SetTooltip = function(bagnonItem)
 
   -- Clear the tooltip.
   scannerTooltip:ClearLines()
 
-  if not itemSlot.info.cached then
+  if not bagnonItem:IsCached() then
 
-    if itemSlot:GetBag() == -1 then
+    if bagnonItem:GetBag() == -1 then
       -- SetBagItem() does not work for bank slots. So we use this instead.
       -- (Thanks to p3lim: https://www.wowinterface.com/forums/showthread.php?p=331883)
-      scannerTooltip:SetInventoryItem('player', itemSlot:GetID() + bankButtonIdOffset)
+      scannerTooltip:SetInventoryItem('player', bagnonItem:GetID() + bankButtonIdOffset)
     else
-      scannerTooltip:SetBagItem(itemSlot:GetBag(), itemSlot:GetID())
+      scannerTooltip:SetBagItem(bagnonItem:GetBag(), bagnonItem:GetID())
     end
 
     -- If the above fails for some reason, we will do SetHyperlink(), too.
@@ -238,19 +239,21 @@ local SetTooltip = function(itemSlot)
 
   end
 
-  -- The above will fail for cached items; like bank slots while not
+  -- The above is not executed for cached items; like bank slots while not
   -- at the bank or bags of other characters. In this case we use
-  -- SetHyperlink(), which may sometimes not capture all stats of itemSlot
+  -- SetHyperlink(), which may sometimes not capture all stats of bagnonItem
   -- of which there are different versions.
-  scannerTooltip:SetHyperlink(itemSlot:GetItem())
+
+  scannerTooltip:ClearLines()
+  scannerTooltip:SetHyperlink(bagnonItem.info.hyperlink)
 
 end
 
 
 
-local ItemNeedsLockpicking = function(itemSlot)
+local ItemNeedsLockpicking = function(bagnonItem)
 
-  SetTooltip(itemSlot)
+  SetTooltip(bagnonItem)
 
   -- Get the localised name for Lockpicking.
   local localisedLockpicking = GetSpellInfo(1809)
@@ -282,17 +285,17 @@ end
 -- Function to return if the character has a certain profession.
 -- For "Book" recipes we have to scan the tooltip
 -- in order to extract and return the profession name.
--- 
--- For testing we allow the function call with itemId only and itemSlot == nil.
-local CharacterHasProfession = function(itemSlot, itemId)
+--
+-- For testing we allow the function call with itemId only and bagnonItem == nil.
+local CharacterHasProfession = function(bagnonItem, itemId)
 
   if not itemId then
-    -- We could also use the item link returned by itemSlot:GetItem() as
+    -- We could also use the item link of bagnonItem.info.hyperlink as
     -- the argument for GetItemInfo() but we need itemId to check for
     -- items with special treatment.
-    itemId = tonumber(string_match(itemSlot:GetItem(), "^.-:(%d+):"))
+    itemId = tonumber(string_match(bagnonItem.info.hyperlink, "^.-:(%d+):"))
   end
-  
+
   local _, _, _, _, _, _, itemSubType, _, _, _, _, _, itemSubTypeId = GetItemInfo(itemId)
 
 
@@ -318,10 +321,10 @@ local CharacterHasProfession = function(itemSlot, itemId)
 
   -- "Design: Mass Prospect Empyrium" (152726) is falsely identified with itemSubType == "Inscription".
   -- And for books we cannot get the profession at all, which is why we have to scan the tooltip.
-  if itemId == 152726 or itemSubTypeId == LE_ITEM_RECIPE_BOOK then
+  if itemId == 152726 or itemSubTypeId == Enum.ItemRecipeSubclass.Book then
 
-    if itemSlot then
-      SetTooltip(itemSlot)
+    if bagnonItem then
+      SetTooltip(bagnonItem)
     else
       -- If this was called for testing with itemId only.
       scannerTooltip:ClearLines()
@@ -360,7 +363,7 @@ local CharacterHasProfession = function(itemSlot, itemId)
 
     -- Check if this is a book without any profession.
     -- Like e.g. "Rockin' Rollin' Racer Pack" (187560).
-    -- (searchPattern is the same as above but with .- instead of professionName) 
+    -- (searchPattern is the same as above but with .- instead of professionName)
     searchPattern = string_gsub(string_gsub("^" .. ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", ".-%%s"), "%(%%.-d%)%s?", ".-")
     for i = scannerTooltip:NumLines(), 2, -1 do
       local line = _G[scannerTooltip:GetName().."TextLeft"..i]
@@ -410,18 +413,19 @@ moduleData.EP_WOD =      "6"
 moduleData.EP_LEGION =   "7"
 moduleData.EP_BFA =      "8"
 moduleData.EP_SL =       "9"
+moduleData.EP_DF =       "10"
 
 
 
 -- Input:   professionName  : The localised profession name to search for.
---          itemSlot        : The current itemSlot; needed to set tooltip.
+--          bagnonItem        : The current bagnonItem; needed to set tooltip.
 -- Output:  alreadyKnown    : True if recipe is already known.
 --          notEnoughSkill  : True if character does not have enough profession skill.
 --          expansionPrefix : Prefix depending on the recipe's WoW expansion.
 --          requiredSkill   : Required profession skill to learn recipe.
-local ReadRecipeTooltip = function(professionName, itemSlot)
+local ReadRecipeTooltip = function(professionName, bagnonItem)
 
-  SetTooltip(itemSlot)
+  SetTooltip(bagnonItem)
 
   -- https://www.lua.org/pil/20.2.html
   local searchPattern = nil
@@ -468,23 +472,40 @@ local ReadRecipeTooltip = function(professionName, itemSlot)
           -- If the recipe is already known, we are not interested in its required skill level!
           return true, nil, nil, nil
 
-        elseif searchPattern and string_find(msg, searchPattern) then
+        elseif searchPattern then
 
-          local expansionIdentifier, requiredSkill = string_match(msg, searchPattern)
-          -- Trim trailing blank space if any.
-          expansionIdentifier = string_gsub(expansionIdentifier, "^(.-)%s$", "%1")
+          local expansionIdentifier, requiredSkill = nil, nil
+          if string_find(msg, searchPattern) then
+            expansionIdentifier, requiredSkill = string_match(msg, searchPattern)
 
-          -- Check if recipe can be learned, i.e. text is not red.
-          local _, g = line:GetTextColor()
-
-          -- Check if the expansionIdentifier is actually known.
-          local expansionPrefix = moduleData.expansionIdentifierToVersionNumber[locale][expansionIdentifier]
-          if not expansionPrefix then
-            print ("Bagnon_RequiredLevel (ERROR): Could not find", expansionIdentifier, "for", locale)
-            expansionPrefix = "?"
+          -- It may happen that the order of profession name and expansion identifier are opposite (e.g. "Klassische ..." in German).
+          -- So if we do not find it, we check the other way around as well (swapped "p" and "e").
+          else
+            local localisedItemMinSkillInverse = string_gsub(string_gsub(string_gsub(moduleData.itemMinSkillString[locale], " ", "%%%%s?"), "p", "(.*)"), "e", professionName)
+            local searchPatternInverse = string_gsub(string_gsub("^" .. ITEM_MIN_SKILL .. "$", "%s?%%.-s%s", "%%s?" .. localisedItemMinSkillInverse .. "%%s"), "%(%%.-d%)%s?", "%%((%%d+)%%)%%s?")
+            if string_find(msg, searchPatternInverse) then
+              expansionIdentifier, requiredSkill = string_match(msg, searchPatternInverse)
+            end
           end
 
-          return false, (tonumber(g) < 0.2), expansionPrefix .. ".", requiredSkill
+          if expansionIdentifier ~= nil and requiredSkill ~= nil then
+            -- print(expansionIdentifier, requiredSkill)
+
+            -- Trim trailing blank space if any.
+            expansionIdentifier = string_gsub(expansionIdentifier, "^(.-)%s$", "%1")
+
+            -- To check if recipe can be learned, i.e. text is not red.
+            local _, g = line:GetTextColor()
+
+            -- Check if the expansionIdentifier is actually known.
+            local expansionPrefix = moduleData.expansionIdentifierToVersionNumber[locale][expansionIdentifier]
+            if not expansionPrefix then
+              print ("Bagnon_RequiredLevel (ERROR): Could not find", expansionIdentifier, "for", locale)
+              expansionPrefix = "?"
+            end
+
+            return false, (tonumber(g) < 0.2), expansionPrefix .. ".", requiredSkill
+          end
 
         elseif searchOnlySkillPattern and string_find(msg, searchOnlySkillPattern) then
           local requiredSkill = string_match(msg, searchOnlySkillPattern)
@@ -503,26 +524,27 @@ end
 
 
 
-local PostUpdateButton = function(itemSlot)
+local PostUpdateButton = function(bagnonItem)
 
-  local itemLink = itemSlot:GetItem()
-  if itemLink then
-  
+  if bagnonItem and bagnonItem.info and bagnonItem.info.hyperlink then
+
+    local itemLink = bagnonItem.info.hyperlink
+
     local item = Item:CreateFromItemLink(itemLink)
     if not item:IsItemEmpty() then
       item:ContinueOnItemLoad(function()
 
         -- Locked items should always be greyed out.
-        if itemSlot.info.locked then
-          local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+        if bagnonItem.info.locked then
+          local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
           buttonIconTexture:SetVertexColor(1,1,1)
           buttonIconTexture:SetDesaturated(1)
         end
 
-        -- Retrieve or create this itemSlot's RequiredLevel text.
-        local RequiredLevel = Cache_RequiredLevel[itemSlot] or Cache_GetRequiredLevel(itemSlot)
+
+        local requiredLevelLabel = GetRequiredLevelLabel(bagnonItem)
         -- Got to set a default font.
-        RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
+        requiredLevelLabel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
 
         -- Get some blizzard info about the current item.
         local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(itemLink)
@@ -530,25 +552,22 @@ local PostUpdateButton = function(itemSlot)
 
         -- Get Goldpaw's "BoE" text and hide it, if it exists.
         -- It will be shown later if not replaced by "required level" text.
-        local ItemBind = nil
-        if _G[itemSlot:GetName().."ExtraInfoFrame"] then
-          ItemBind = Cache_ItemBind[itemSlot] or Cache_GetItemBind(itemSlot)
-          if ItemBind then ItemBind:Hide() end
-        end
+        local itemBindLabel = GetItemBindLabel(bagnonItem)
+        if itemBindLabel then itemBindLabel:Hide() end
 
 
         -- Check for Junkboxes and Lockboxes (Miscellaneous Junk).
         if itemTypeId == 15 and itemSubTypeId == 0 then
-          local itemNeedsLockpicking, notEnoughSkill, requiredSkill = ItemNeedsLockpicking(itemSlot)
+          local itemNeedsLockpicking, notEnoughSkill, requiredSkill = ItemNeedsLockpicking(bagnonItem)
 
           if itemNeedsLockpicking then
             if notEnoughSkill then
 
-              RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
-              RequiredLevel:SetText(requiredSkill)
+              requiredLevelLabel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
+              requiredLevelLabel:SetText(requiredSkill)
 
-              if not itemSlot.info.locked then
-                local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+              if not bagnonItem.info.locked then
+                local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
                 buttonIconTexture:SetVertexColor(1,.3,.3)
                 buttonIconTexture:SetDesaturated(1)
               end
@@ -558,61 +577,58 @@ local PostUpdateButton = function(itemSlot)
         end
 
 
-        if itemMinLevel then
-          if itemMinLevel > UnitLevel("player") then
-
-            if not Unfit:IsItemUnusable(itemLink) then
-              RequiredLevel:SetText(itemMinLevel)
-              if not itemSlot.info.locked then
-                local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
-                buttonIconTexture:SetVertexColor(1,.3,.3)
-                buttonIconTexture:SetDesaturated(1)
-              end
-            else
-              if ItemBind then ItemBind:Show() end
+        if itemMinLevel and itemMinLevel > UnitLevel("player") then
+          if not Unfit:IsItemUnusable(itemLink) then
+            requiredLevelLabel:SetText(itemMinLevel)
+            if not bagnonItem.info.locked then
+              local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
+              buttonIconTexture:SetVertexColor(1,.3,.3)
+              buttonIconTexture:SetDesaturated(1)
             end
-            return
+          else
+            if itemBindLabel then itemBindLabel:Show() end
           end
+          return
         end
 
-        -- LE_ITEM_CLASS_RECIPE by Kanegasi (https://www.wowinterface.com/forums/showthread.php?p=330514#post330514)
-        if itemTypeId == LE_ITEM_CLASS_RECIPE then
+        if itemTypeId == Enum.ItemClass.Recipe then
 
           -- For almost all recipes, itemSubType is also the profession name.
-          -- https://wow.gamepedia.com/ItemType
+          -- https://warcraft.wiki.gg/wiki/ItemType
           -- However, for "Book" recipes we have to extract the profession name from
           -- the tooltip. We do this at the same time as checking if the player has
           -- the profession at all. Thus, we only have to scan the tooltip for the professions
           -- the player has.
-          local hasProfession, professionName = CharacterHasProfession(itemSlot)
+          local hasProfession, professionName = CharacterHasProfession(bagnonItem)
 
           if not hasProfession then
-            if ItemBind then ItemBind:Show() end
-            RequiredLevel:SetText("")
+            if itemBindLabel then itemBindLabel:Show() end
+            requiredLevelLabel:SetText("")
+
             if Addon.sets.glowUnusable then
               r, g, b = RED_FONT_COLOR.r, RED_FONT_COLOR.g, RED_FONT_COLOR.b
-              itemSlot.IconBorder:SetTexture(id and C_ArtifactUI.GetRelicInfoByItemID(id) and 'Interface\\Artifacts\\RelicIconFrame' or 'Interface\\Common\\WhiteIconFrame')
-              itemSlot.IconBorder:SetVertexColor(r, g, b)
-              itemSlot.IconBorder:SetShown(r)
-              itemSlot.IconGlow:SetVertexColor(r, g, b, Addon.sets.glowAlpha)
-              itemSlot.IconGlow:SetShown(r)
+              bagnonItem.IconBorder:SetTexture(id and C_ArtifactUI.GetRelicInfoByItemID(id) and 'Interface\\Artifacts\\RelicIconFrame' or 'Interface\\Common\\WhiteIconFrame')
+              bagnonItem.IconBorder:SetVertexColor(r, g, b)
+              bagnonItem.IconBorder:SetShown(r)
+              bagnonItem.IconGlow:SetVertexColor(r, g, b, Addon.sets.glowAlpha)
+              bagnonItem.IconGlow:SetShown(r)
             end
             return
           end
-          
+
           if not professionName then
             -- print("This was a book without profession!")
             return
           end
 
-          -- Scan tooltip. (Not checking for itemSubTypeId != LE_ITEM_RECIPE_BOOK here because of efficiency.)
-          local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, itemSlot)
+          -- Scan tooltip. (Not checking for itemSubTypeId != Enum.ItemRecipeSubclass.Book here because of efficiency.)
+          local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, bagnonItem)
 
           if alreadyKnown then
-            if ItemBind then ItemBind:Show() end
-            RequiredLevel:SetText("")
-            if not itemSlot.info.locked then
-              local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+            if itemBindLabel then itemBindLabel:Show() end
+            requiredLevelLabel:SetText("")
+            if not bagnonItem.info.locked then
+              local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
               buttonIconTexture:SetVertexColor(.4,.4,.4)
               buttonIconTexture:SetDesaturated(1)
             end
@@ -621,11 +637,11 @@ local PostUpdateButton = function(itemSlot)
 
           if notEnoughSkill then
 
-            RequiredLevel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
-            RequiredLevel:SetText(expansionPrefix .. requiredSkill)
+            requiredLevelLabel:SetFont("Fonts\\ARIALN.TTF", 12, "OUTLINE")
+            requiredLevelLabel:SetText(expansionPrefix .. requiredSkill)
 
-            if not itemSlot.info.locked then
-              local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+            if not bagnonItem.info.locked then
+              local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
               buttonIconTexture:SetVertexColor(1,.3,.3)
               buttonIconTexture:SetDesaturated(1)
             end
@@ -633,10 +649,10 @@ local PostUpdateButton = function(itemSlot)
           end
 
           -- Recipe is actually learnable.
-          if ItemBind then ItemBind:Show() end
-          RequiredLevel:SetText("")
-          if not itemSlot.info.locked then
-            local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+          if itemBindLabel then itemBindLabel:Show() end
+          requiredLevelLabel:SetText("")
+          if not bagnonItem.info.locked then
+            local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
             buttonIconTexture:SetVertexColor(1,1,1)
             buttonIconTexture:SetDesaturated(nil)
           end
@@ -644,31 +660,32 @@ local PostUpdateButton = function(itemSlot)
         end
 
         -- Any other item.
-        if ItemBind then ItemBind:Show() end
-        RequiredLevel:SetText("")
-        if not itemSlot.info.locked then
-          local buttonIconTexture = _G[itemSlot:GetName().."IconTexture"]
+        if itemBindLabel then itemBindLabel:Show() end
+        requiredLevelLabel:SetText("")
+        if not bagnonItem.info.locked then
+          local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
           buttonIconTexture:SetVertexColor(1,1,1)
           buttonIconTexture:SetDesaturated(nil)
         end
       end)
     end
   else
-    if Cache_RequiredLevel[itemSlot] then
-      Cache_RequiredLevel[itemSlot]:SetText("")
+    -- Need to unset the label, when there is no item in an item slot any more.
+    if cachedRequiredLevelLabels[bagnonItem] then
+      cachedRequiredLevelLabels[bagnonItem]:SetText("")
     end
   end
 end
 
 
 
-local PostUpdateButtonWrapper = function(itemSlot)
+local PostUpdateButtonWrapper = function(bagnonItem)
 
   -- Hide the goldpawFrame until after PostUpdateButton has had a chance
   -- to hide the "BoE" text in it.
-  local goldpawFrame = _G[itemSlot:GetName().."ExtraInfoFrame"]
+  local goldpawFrame = _G[bagnonItem:GetName().."ExtraInfoFrame"]
   if goldpawFrame then goldpawFrame:Hide() end
-  PostUpdateButton(itemSlot)
+  PostUpdateButton(bagnonItem)
   if goldpawFrame then goldpawFrame:Show() end
 
 end
@@ -679,34 +696,31 @@ end
 
 
 
-local item = Bagnon.ItemSlot or Bagnon.Item
+-- - Bagnon.ContainerItem is for retail. If I use Bagnon.Item instead,
+--   there are no UpdateCooldown and UpdateLocked functions to hook,
+--   which I need to keep my colour modifications of the icons.
+-- - TODO: Bagnon.Items is for classic??
+local item = Bagnon.ContainerItem or Bagnon.Items
+
 if item then
 
   if item.Update then
     hooksecurefunc(item, "Update", PostUpdateButtonWrapper)
   end
 
-  -- Needed because otherwise UpdateUpgradeIcon will reset the VertexColor.
+  -- -- Needed because otherwise UpdateUpgradeIcon will reset the VertexColor.
   if item.UpdateUpgradeIcon then
     hooksecurefunc(item, "UpdateUpgradeIcon", PostUpdateButtonWrapper)
   end
 
-  -- Needed to set the VertexColor in time, when BAG_UPDATE_COOLDOWN is triggered.
+  -- -- Needed to set the VertexColor in time, when BAG_UPDATE_COOLDOWN is triggered.
   if item.UpdateCooldown then
     hooksecurefunc(item, "UpdateCooldown", PostUpdateButtonWrapper)
   end
 
-  -- Needed to keep the frame of unusable recipes.
-  if item.OnEnter then
-    hooksecurefunc(item, "OnEnter", PostUpdateButtonWrapper)
-  end
-  if item.OnLeave then
-    hooksecurefunc(item, "OnLeave", PostUpdateButtonWrapper)
-  end
-
   -- Needed to keep the desaturation.
-  if item.SetLocked then
-    hooksecurefunc(item, "SetLocked", PostUpdateButtonWrapper)
+  if item.UpdateLocked then
+    hooksecurefunc(item, "UpdateLocked", PostUpdateButtonWrapper)
   end
 
 end
@@ -739,18 +753,18 @@ end
 -- testframe1:SetClampedToScreen(true)
 
 -- testframe1:SetScript("OnEnter", function()
-  
+
   -- -- local itemId = 34109    -- Weather-Beaten Journal (Fishing book).
   -- -- local itemId = 45912    -- Book of Glyph Mastery (Inscription book).
   -- local itemId = 187560   -- Rockin' Rollin' Racer Pack (book without profession).
-   
+
   -- print(CharacterHasProfession(nil, itemId))
 
   -- -- Just for visual inspection of the tooltip.
   -- GameTooltip:SetOwner(testframe1, "ANCHOR_TOPLEFT")
   -- GameTooltip:SetHyperlink("item:" .. itemId .. ":0:0:0:0:0:0:0")
   -- GameTooltip:Show()
-  
+
 -- end )
 
 

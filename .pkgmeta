@@ -1,8 +1,0 @@
-package-as: Bagnon_RequiredLevel
-
-enable-nolib-creation: no
-
-ludius-changelog: yes
-
-ignore:
- - README.md

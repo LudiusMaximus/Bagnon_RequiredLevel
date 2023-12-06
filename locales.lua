@@ -18,7 +18,7 @@ moduleData.itemMinSkillString = {
 
 moduleData.expansionIdentifierToVersionNumber = {
   ["enUS"] = {
-    [""] =                      moduleData.EP_VANILLA,
+    ["Classic"] =               moduleData.EP_VANILLA,
     ["Outland"] =               moduleData.EP_BC,
     ["Northrend"] =             moduleData.EP_WRATH,
     ["Cataclysm"] =             moduleData.EP_CATA,
@@ -28,9 +28,10 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["Zandalari"] =             moduleData.EP_BFA,
     ["Kul Tiran"] =             moduleData.EP_BFA,
     ["Shadowlands"] =           moduleData.EP_SL,
+    ["Dragon Isles"] =          moduleData.EP_DF,
   },
   ["enGB"] = {
-    [""] =                      moduleData.EP_VANILLA,
+    ["Classic"] =               moduleData.EP_VANILLA,
     ["Outland"] =               moduleData.EP_BC,
     ["Northrend"] =             moduleData.EP_WRATH,
     ["Cataclysm"] =             moduleData.EP_CATA,
@@ -40,9 +41,10 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["Zandalari"] =             moduleData.EP_BFA,
     ["Kul Tiran"] =             moduleData.EP_BFA,
     ["Shadowlands"] =           moduleData.EP_SL,
+    ["Dragon Isles"] =          moduleData.EP_DF,
   },
   ["deDE"] = {
-    [""] =                      moduleData.EP_VANILLA,
+    ["Klassische"] =            moduleData.EP_VANILLA,        -- Would need itemMinSkillString "e p" for this.
     ["der Scherbenwelt"] =      moduleData.EP_BC,
     ["von Nordend"] =           moduleData.EP_WRATH,
     ["des Kataklysmus"] =       moduleData.EP_CATA,
@@ -52,9 +54,10 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["von Zandalar"] =          moduleData.EP_BFA,
     ["von Kul Tiras"] =         moduleData.EP_BFA,
     ["der Schattenlande"] =     moduleData.EP_SL,
+    ["der Dracheninseln"] =     moduleData.EP_DF,
   },
   ["frFR"] = {
-    [""] =                      moduleData.EP_VANILLA,
+    ["classique"] =             moduleData.EP_VANILLA,
     ["de l’Outreterre"] =       moduleData.EP_BC,
     ["du Norfendre"] =          moduleData.EP_WRATH,
     ["de Cataclysm"] =          moduleData.EP_CATA,
@@ -66,7 +69,7 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["d’Ombreterre"] =          moduleData.EP_SL,
   },
   ["itIT"] = {
-    [""] =                      moduleData.EP_VANILLA,
+    ["Classica"] =              moduleData.EP_VANILLA,
     ["delle Terre Esterne"] =   moduleData.EP_BC,
     ["di Nordania"] =           moduleData.EP_WRATH,
     ["di Cataclysm"] =          moduleData.EP_CATA,
@@ -78,7 +81,7 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["di Shadowlands"] =        moduleData.EP_SL,
   },
   ["esES"] = {
-    [""] =                      moduleData.EP_VANILLA,
+    ["clásica"] =               moduleData.EP_VANILLA,
     ["de Terrallende"] =        moduleData.EP_BC,
     ["de Rasganorte"] =         moduleData.EP_WRATH,
     ["de Cataclysm"] =          moduleData.EP_CATA,
@@ -90,7 +93,7 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["de Shadowlands"] =        moduleData.EP_SL,
   },
   ["esMX"] = {
-    [""] =                      moduleData.EP_VANILLA,
+    ["clásica"] =               moduleData.EP_VANILLA,
     ["de Terrallende"] =        moduleData.EP_BC,
     ["de Rasganorte"] =         moduleData.EP_WRATH,
     ["de Cataclysm"] =          moduleData.EP_CATA,
@@ -105,15 +108,17 @@ moduleData.expansionIdentifierToVersionNumber = {
 
 
   -- Check these items to create more locales...
-  -- Outland:     https://www.wowhead.com/item=34126/recipe-shoveltusk-soup
-  -- Northrend:   https://www.wowhead.com/item=43036/recipe-dragonfin-filet
-  -- Cataclysm:   https://www.wowhead.com/item=62800/recipe-seafood-magnifique-feast
-  -- Pandaria:    https://www.wowhead.com/item=74658/recipe-spicy-vegetable-chips
-  -- Draenor:     https://www.wowhead.com/item=116347/recipe-burnished-leather-bag
-  -- Legion:      https://www.wowhead.com/item=133830/recipe-lavish-suramar-feast
-  -- Zandalari:   https://www.wowhead.com/spell=265817/zandalari-cooking
-  -- Kul Tiran:   https://www.wowhead.com/spell=264646/kul-tiran-cooking
-  -- Shadowlands: https://www.wowhead.com/spell=309831/shadowlands-cooking
+  -- Classic:      https://www.wowhead.com/item=6661/recipe-savory-deviate-delight
+  -- Outland:      https://www.wowhead.com/item=34126/recipe-shoveltusk-soup
+  -- Northrend:    https://www.wowhead.com/item=43036/recipe-dragonfin-filet
+  -- Cataclysm:    https://www.wowhead.com/item=62800/recipe-seafood-magnifique-feast
+  -- Pandaria:     https://www.wowhead.com/item=74658/recipe-spicy-vegetable-chips
+  -- Draenor:      https://www.wowhead.com/item=116347/recipe-burnished-leather-bag
+  -- Legion:       https://www.wowhead.com/item=133830/recipe-lavish-suramar-feast
+  -- Zandalari:    https://www.wowhead.com/spell=265817/zandalari-cooking
+  -- Kul Tiran:    https://www.wowhead.com/spell=264646/kul-tiran-cooking
+  -- Shadowlands:  https://www.wowhead.com/spell=309831/shadowlands-cooking
+  -- Dragon Isles: https://www.wowhead.com/item=194641/design-elemental-lariat
 
 
 }
