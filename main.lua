@@ -36,7 +36,7 @@ local locale = GetLocale()
 -- For Classic there is no GetProfessions() so we have to scan the spell book for
 -- spells indicating that a profession was learned.
 local professionSpells = nil
-if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
 
   -- Very cool trick by MunkDev: https://www.wowinterface.com/forums/showthread.php?p=325688#post325688
   local function StopLastSound()
@@ -83,9 +83,10 @@ if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNIN
   end)
 
   -- This table maps spell IDs (as returned by SpellBook_GetSpellBookSlot())
-  -- e.g. https://classic.wowhead.com/spell=818/basic-campfire
+  -- e.g. https://www.wowhead.com/classic/spell=818/basic-campfire
+  -- or   https://www.wowhead.com/wotlk/spell=32549/leatherworking
   -- to profession subclassID (as returned by GetItemInfo()).
-  -- https://wowpedia.fandom.com/wiki/ItemType#9:_Recipe
+  -- https://warcraft.wiki.gg/wiki/ItemType#9:_Recipe
   -- Thus, you can check if the player knows a certain profession, which does not
   -- seem to be possible otherwise in Classic, where there is no GetProfessions().
   professionSpells = {
@@ -95,24 +96,28 @@ if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNIN
      [3811] = 1, -- Leatherworking Expert
     [10662] = 1, -- Leatherworking Artisan
     [32549] = 1, -- Leatherworking Master (BC)
+    [51302] = 1, -- Leatherworking Grand Master (Wrath)
 
      [3908] = 2, -- Tailoring Apprentice
      [3909] = 2, -- Tailoring Journeyman
      [3910] = 2, -- Tailoring Expert
     [12180] = 2, -- Tailoring Artisan
     [26790] = 2, -- Tailoring Master (BC)
+    [51309] = 2, -- Tailoring Grand Master (Wrath)
 
      [4036] = 3, -- Engineering Apprentice
      [4037] = 3, -- Engineering Journeyman
      [4038] = 3, -- Engineering Expert
     [12656] = 3, -- Engineering Artisan
     [30350] = 3, -- Engineering Master (BC)
+    [51306] = 3, -- Engineering Grand Master (Wrath)
 
      [2018] = 4, -- Blacksmithing Apprentice
      [3100] = 4, -- Blacksmithing Journeyman
      [3538] = 4, -- Blacksmithing Expert
      [9785] = 4, -- Blacksmithing Artisan
     [29844] = 4, -- Blacksmithing Master (BC)
+    [51300] = 4, -- Blacksmithing Grand Master (Wrath)
 
       [818] = 5, -- Basic Campfire (Cooking)
 
@@ -121,33 +126,45 @@ if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNIN
      [3464] = 6, -- Alchemy Expert
     [11611] = 6, -- Alchemy Artisan
     [28596] = 6, -- Alchemy Master (BC)
+    [51304] = 6, -- Alchemy Grand Master (Wrath)
 
      [3273] = 7, -- First Aid Apprentice
      [3274] = 7, -- First Aid Journeyman
      [7924] = 7, -- First Aid Expert
     [10846] = 7, -- First Aid Artisan
     [27028] = 7, -- First Aid Master (BC)
+    [45542] = 7, -- First Aid Grand Master (Wrath)
 
      [7411] = 8, -- Enchanting Apprentice
      [7412] = 8, -- Enchanting Journeyman
      [7413] = 8, -- Enchanting Expert
     [13920] = 8, -- Enchanting Artisan
     [28029] = 8, -- Enchanting Master (BC)
+    [51313] = 8, -- Enchanting Grand Master (Wrath)
 
      [7620] = 9, -- Fishing Apprentice
      [7731] = 9, -- Fishing Journeyman
      [7732] = 9, -- Fishing Expert
     [18248] = 9, -- Fishing Artisan
     [33095] = 9, -- Fishing Master (BC)
+    [51294] = 9, -- Fishing Grand Master (Wrath)
 
+    -- Inscription since BC.
     [25229] = 10, -- Jewelcrafting Apprentice
     [25230] = 10, -- Jewelcrafting Journeyman
     [28894] = 10, -- Jewelcrafting Expert
     [28895] = 10, -- Jewelcrafting Artisan
     [28897] = 10, -- Jewelcrafting Master (BC)
+    [51311] = 10, -- Jewelcrafting Grand Master (Wrath)
 
-    -- No Inscription as of BCC.
-
+    -- Inscription since Wrath.
+    [45357] = 11, -- Inscription Apprentice
+    [45358] = 11, -- Inscription Journeyman
+    [45359] = 11, -- Inscription Expert
+    [45360] = 11, -- Inscription Artisan
+    [45361] = 11, -- Inscription Master (BC)
+    [45363] = 11, -- Inscription Grand Master (Wrath)
+    
     -- We are only interested in professions with recipes
     -- so no gathering skills here!
   }
@@ -301,7 +318,7 @@ local CharacterHasProfession = function(bagnonItem, itemId)
 
   -- For Classic there is no GetProfessions() so we have to scan the spell book for
   -- spells indicating that a profession was learned.
-  if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+  if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
 
     for i = 1, 24 do
       if _G["SpellButton" .. i] then
@@ -434,7 +451,7 @@ local ReadRecipeTooltip = function(professionName, bagnonItem)
   -- If the locale is not known, just search for the required skill and ignore the expansion.
   -- The same, if we are in Classic or BCC, because there were no expansion specific profession levels then.
   if not moduleData.itemMinSkillString[locale] or not moduleData.expansionIdentifierToVersionNumber[locale]
-      or WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+      or WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
     searchOnlySkillPattern = "^.*%((%d+)%).*$"
   else
     -- ITEM_MIN_SKILL = "Requires %s (%d)"
@@ -456,7 +473,7 @@ local ReadRecipeTooltip = function(professionName, bagnonItem)
   local start = scannerTooltip:NumLines()
   local stop = 2
   local incr = -1
-  if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC or WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+  if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
     start = 2
     stop = scannerTooltip:NumLines()
     incr = 1
@@ -699,8 +716,7 @@ end
 -- - Bagnon.ContainerItem is for retail. If I use Bagnon.Item instead,
 --   there are no UpdateCooldown and UpdateLocked functions to hook,
 --   which I need to keep my colour modifications of the icons.
--- - TODO: Bagnon.Items is for classic??
-local item = Bagnon.ContainerItem or Bagnon.Items
+local item = Bagnon.ContainerItem 
 
 if item then
 
