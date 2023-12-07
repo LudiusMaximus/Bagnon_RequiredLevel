@@ -553,9 +553,10 @@ local PostUpdateButton = function(bagnonItem)
         requiredLevelLabel:SetFont("Fonts\\ARIALN.TTF", 14, "OUTLINE")
 
         -- Get some blizzard info about the current item.
-        local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(bagnonItem.info.itemID)
-
-
+        -- Got to use bagnonItem.info.hyperlink instead of bagnonItem.info.itemID,
+        -- because the latter may return the item with a default itemMinLevel.
+        local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(bagnonItem.info.hyperlink)
+        
         -- Get Goldpaw's "BoE" text and hide it, if it exists.
         -- It will be shown later if not replaced by "required level" text.
         local itemBindLabel = GetItemBindLabel(bagnonItem)
