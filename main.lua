@@ -534,7 +534,7 @@ end
 
 local PostUpdateButton = function(bagnonItem)
 
-  if bagnonItem and bagnonItem.info and bagnonItem.info.itemID then
+  if bagnonItem and bagnonItem.info and bagnonItem.info.itemID and bagnonItem.info.hyperlink then
 
     local item = Item:CreateFromItemID(bagnonItem.info.itemID)
     if not item:IsItemEmpty() then
@@ -556,7 +556,7 @@ local PostUpdateButton = function(bagnonItem)
         -- Got to use bagnonItem.info.hyperlink instead of bagnonItem.info.itemID,
         -- because the latter may return the item with a default itemMinLevel.
         local _, _, _, _, itemMinLevel, _, itemSubType, _, _, _, _, itemTypeId, itemSubTypeId = GetItemInfo(bagnonItem.info.hyperlink)
-        
+
         -- Get Goldpaw's "BoE" text and hide it, if it exists.
         -- It will be shown later if not replaced by "required level" text.
         local itemBindLabel = GetItemBindLabel(bagnonItem)
