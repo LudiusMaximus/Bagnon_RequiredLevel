@@ -266,7 +266,13 @@ local ItemNeedsLockpicking = function(bagnonItem)
   SetTooltip(bagnonItem)
 
   -- Get the localised name for Lockpicking.
-  local localisedLockpicking = GetSpellInfo(1809)
+  
+  local localisedLockpicking = ""
+  if GetSpellInfo then     -- Classic
+    localisedLockpicking = GetSpellInfo(1809)
+  else
+    localisedLockpicking = C_Spell.GetSpellName(1809)
+  end
 
   -- https://www.lua.org/pil/20.2.html
   -- "%s?%%.-s%s" matches both " %s " (EN), "%s " (FR) and " %1$s " (DE) in ITEM_MIN_SKILL.
