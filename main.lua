@@ -270,7 +270,7 @@ local ItemNeedsLockpicking = function(bagnonItem)
   local localisedLockpicking = ""
   if GetSpellInfo then     -- Classic
     localisedLockpicking = GetSpellInfo(1809)
-  else
+  else     -- Retail
     localisedLockpicking = C_Spell.GetSpellName(1809)
   end
 
