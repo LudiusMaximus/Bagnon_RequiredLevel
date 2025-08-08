@@ -233,10 +233,12 @@ end
 local scannerTooltip = CreateFrame("GameTooltip", "BagnonRequiredLevelScannerTooltip", nil, "GameTooltipTemplate")
 scannerTooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
-local bankButtonIdOffset = BankButtonIDToInvSlotID(1) - 1
+local bankButtonIdOffset = C_Container.ContainerIDToInventoryID(1) - 1
 
 -- Function to set the tooltip to the current item.
 local SetTooltip = function(bagnonItem)
+
+  -- print("SetTooltip", bagnonItem:IsCached(), bagnonItem:GetBag(), bagnonItem:GetID(), bagnonItem.info.itemID)
 
   if not bagnonItem:IsCached() then
 
@@ -428,6 +430,7 @@ moduleData.EP_LEGION =   "7"
 moduleData.EP_BFA =      "8"
 moduleData.EP_SL =       "9"
 moduleData.EP_DF =       "10"
+moduleData.EP_WW =       "11"
 
 
 
@@ -636,6 +639,7 @@ local PostUpdateButton = function(bagnonItem)
 
           -- Scan tooltip. (Not checking for itemSubTypeId != Enum.ItemRecipeSubclass.Book here because of efficiency.)
           local alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill = ReadRecipeTooltip(professionName, bagnonItem)
+          -- print(alreadyKnown, notEnoughSkill, expansionPrefix, requiredSkill)
 
           if alreadyKnown then
             if itemBindLabel then itemBindLabel:Show() end

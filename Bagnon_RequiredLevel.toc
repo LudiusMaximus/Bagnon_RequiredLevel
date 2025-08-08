@@ -1,6 +1,7 @@
-## Interface: 110107
+## Interface: 110200
 ## Version: @project-version@
 ## Title: Bagnon RequiredLevel
+## IconAtlas: Levelup-Icon-Bag
 ## Author: LudiusMaximus
 ## Notes: A simple Bagnon plugin that displays |nitems and recipes in red for which |nthe required character or skill level |nis not yet fulfilled. The required level |nis then displayed in the corner. |n(Based on "Bagnon ItemLevel" |nby Lars "Goldpaw" Norberg.)
 ## RequiredDeps: Bagnon
