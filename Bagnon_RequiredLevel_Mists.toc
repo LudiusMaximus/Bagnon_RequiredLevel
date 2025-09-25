@@ -1,4 +1,4 @@
-## Interface: 40402
+## Interface: 50501
 ## Version: @project-version@
 ## Title: Bagnon RequiredLevel
 ## Author: LudiusMaximus
