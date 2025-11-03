@@ -268,7 +268,7 @@ local ItemNeedsLockpicking = function(bagnonItem)
   SetTooltip(bagnonItem)
 
   -- Get the localised name for Lockpicking.
-  
+
   local localisedLockpicking = ""
   if GetSpellInfo then     -- Classic
     localisedLockpicking = GetSpellInfo(1809)
@@ -549,9 +549,10 @@ local PostUpdateButton = function(bagnonItem)
     if not item:IsItemEmpty() then
       item:ContinueOnItemLoad(function()
 
+        local buttonIconTexture = GetItemButtonIconTexture(bagnonItem)
+
         -- Locked items should always be greyed out.
         if bagnonItem.info.locked then
-          local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
           buttonIconTexture:SetVertexColor(1,1,1)
           buttonIconTexture:SetDesaturated(1)
         end
@@ -583,7 +584,6 @@ local PostUpdateButton = function(bagnonItem)
               requiredLevelLabel:SetText(requiredSkill)
 
               if not bagnonItem.info.locked then
-                local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
                 buttonIconTexture:SetVertexColor(1,.3,.3)
                 buttonIconTexture:SetDesaturated(1)
               end
@@ -597,7 +597,6 @@ local PostUpdateButton = function(bagnonItem)
           if not Unfit:IsItemUnusable(bagnonItem.info.itemID) then
             requiredLevelLabel:SetText(itemMinLevel)
             if not bagnonItem.info.locked then
-              local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
               buttonIconTexture:SetVertexColor(1,.3,.3)
               buttonIconTexture:SetDesaturated(1)
             end
@@ -645,7 +644,6 @@ local PostUpdateButton = function(bagnonItem)
             if itemBindLabel then itemBindLabel:Show() end
             requiredLevelLabel:SetText("")
             if not bagnonItem.info.locked then
-              local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
               buttonIconTexture:SetVertexColor(.4,.4,.4)
               buttonIconTexture:SetDesaturated(1)
             end
@@ -658,7 +656,6 @@ local PostUpdateButton = function(bagnonItem)
             requiredLevelLabel:SetText(expansionPrefix .. requiredSkill)
 
             if not bagnonItem.info.locked then
-              local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
               buttonIconTexture:SetVertexColor(1,.3,.3)
               buttonIconTexture:SetDesaturated(1)
             end
@@ -669,7 +666,6 @@ local PostUpdateButton = function(bagnonItem)
           if itemBindLabel then itemBindLabel:Show() end
           requiredLevelLabel:SetText("")
           if not bagnonItem.info.locked then
-            local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
             buttonIconTexture:SetVertexColor(1,1,1)
             buttonIconTexture:SetDesaturated(nil)
           end
@@ -680,7 +676,6 @@ local PostUpdateButton = function(bagnonItem)
         if itemBindLabel then itemBindLabel:Show() end
         requiredLevelLabel:SetText("")
         if not bagnonItem.info.locked then
-          local buttonIconTexture = _G[bagnonItem:GetName().."IconTexture"]
           buttonIconTexture:SetVertexColor(1,1,1)
           buttonIconTexture:SetDesaturated(nil)
         end
