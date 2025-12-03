@@ -1,4 +1,4 @@
-## Interface: 110205
+## Interface: 110207
 ## Version: @project-version@
 ## Title: Bagnon RequiredLevel
 ## IconAtlas: Levelup-Icon-Bag
