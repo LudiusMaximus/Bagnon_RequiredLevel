@@ -14,6 +14,7 @@ moduleData.itemMinSkillString = {
   ["itIT"] = "p e",
   ["esES"] = "p e",
   ["esMX"] = "p e",
+  ["ruRU"] = "p e",  
 }
 
 moduleData.expansionIdentifierToVersionNumber = {
@@ -116,8 +117,20 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["de las Islas Dragón"] =      moduleData.EP_DF,
     ["de Khaz Algar"] =            moduleData.EP_WW,
   },
-
-
+  ["ruRU"] = {
+    ["Классика"] =                  moduleData.EP_VANILLA,
+    ["Запределье"] =                  moduleData.EP_BC,
+    ["Нордскол"] =                moduleData.EP_WRATH,
+    ["Катаклизм"] =                moduleData.EP_CATA,
+    ["Пандария"] =                 moduleData.EP_PANDARIA,
+    ["Дренор"] =                  moduleData.EP_WOD,
+    ["Легион"] =                   moduleData.EP_LEGION,
+    ["Зандалар"] =                moduleData.EP_BFA,
+    ["Кул-Тирас"] =                moduleData.EP_BFA,
+    ["Темные Земли"] =              moduleData.EP_SL,
+    ["Драконьи острова"] =             moduleData.EP_DF,
+    ["Каз Алгар"] =               moduleData.EP_WW,
+  },
 
   -- Check these items to create more locales...
   -- Classic:      https://www.wowhead.com/item=6661/recipe-savory-deviate-delight
@@ -132,6 +145,7 @@ moduleData.expansionIdentifierToVersionNumber = {
   -- Shadowlands:  https://www.wowhead.com/spell=309831/shadowlands-cooking
   -- Dragon Isles: https://www.wowhead.com/item=194641/design-elemental-lariat
   -- Khaz Algar:   https://www.wowhead.com/item=223133/formula-illusory-adornment-crystal
+
 
 
 }
