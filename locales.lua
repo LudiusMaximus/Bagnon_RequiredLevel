@@ -14,7 +14,8 @@ moduleData.itemMinSkillString = {
   ["itIT"] = "p e",
   ["esES"] = "p e",
   ["esMX"] = "p e",
-  ["ruRU"] = "p e",  
+  -- Still unclear how to treat Russian (https://github.com/LudiusMaximus/Bagnon_RequiredLevel/pull/8)
+  -- ["ruRU"] = "p e",
 }
 
 moduleData.expansionIdentifierToVersionNumber = {
@@ -31,6 +32,7 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["Shadowlands"] =              moduleData.EP_SL,
     ["Dragon Isles"] =             moduleData.EP_DF,
     ["Khaz Algar"] =               moduleData.EP_WW,
+    ["Midnight"] =                 moduleData.EP_MN,
   },
   ["enGB"] = {
     ["Classic"] =                  moduleData.EP_VANILLA,
@@ -45,10 +47,11 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["Shadowlands"] =              moduleData.EP_SL,
     ["Dragon Isles"] =             moduleData.EP_DF,
     ["Khaz Algar"] =               moduleData.EP_WW,
+    ["Midnight"] =                 moduleData.EP_MN,
   },
   ["deDE"] = {
     -- Would need itemMinSkillString "e p" for this, so in main.lua we also try the inverse if we don't find it.
-    ["Klassische"] =               moduleData.EP_VANILLA,  
+    ["Klassische"] =               moduleData.EP_VANILLA,
     ["der Scherbenwelt"] =         moduleData.EP_BC,
     ["von Nordend"] =              moduleData.EP_WRATH,
     ["des Kataklysmus"] =          moduleData.EP_CATA,
@@ -60,6 +63,7 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["der Schattenlande"] =        moduleData.EP_SL,
     ["der Dracheninseln"] =        moduleData.EP_DF,
     ["von Khaz Algar"] =           moduleData.EP_WW,
+    ["von Midnight"] =             moduleData.EP_MN,
   },
   ["frFR"] = {
     ["classique"] =                moduleData.EP_VANILLA,
@@ -74,6 +78,7 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["d’Ombreterre"] =             moduleData.EP_SL,
     ["des îles aux Dragons"] =     moduleData.EP_DF,
     ["de Khaz Algar"] =            moduleData.EP_WW,
+    ["de Midnight"] =              moduleData.EP_MN,
   },
   ["itIT"] = {
     ["Classica"] =                 moduleData.EP_VANILLA,
@@ -88,6 +93,7 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["di Shadowlands"] =           moduleData.EP_SL,
     ["delle Isole dei Draghi"] =   moduleData.EP_DF,
     ["di Khaz Algar"] =            moduleData.EP_WW,
+    ["di Midnight"] =              moduleData.EP_MN,
   },
   ["esES"] = {
     ["clásica"] =                  moduleData.EP_VANILLA,
@@ -102,6 +108,7 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["de Shadowlands"] =           moduleData.EP_SL,
     ["de las Islas Dragón"] =      moduleData.EP_DF,
     ["de Khaz Algar"] =            moduleData.EP_WW,
+    ["de Midnight"] =              moduleData.EP_MN,
   },
   ["esMX"] = {
     ["clásica"] =                  moduleData.EP_VANILLA,
@@ -116,20 +123,24 @@ moduleData.expansionIdentifierToVersionNumber = {
     ["de Shadowlands"] =           moduleData.EP_SL,
     ["de las Islas Dragón"] =      moduleData.EP_DF,
     ["de Khaz Algar"] =            moduleData.EP_WW,
+    ["de Midnight"] =              moduleData.EP_MN,
   },
+
+  -- Still unclear how to treat Russian (https://github.com/LudiusMaximus/Bagnon_RequiredLevel/pull/8)
   ["ruRU"] = {
-    ["Классика"] =                  moduleData.EP_VANILLA,
-    ["Запределье"] =                  moduleData.EP_BC,
-    ["Нордскол"] =                moduleData.EP_WRATH,
+    ["Классика"] =                 moduleData.EP_VANILLA,
+    ["Запределье"] =               moduleData.EP_BC,
+    ["Нордскол"] =                 moduleData.EP_WRATH,
     ["Катаклизм"] =                moduleData.EP_CATA,
     ["Пандария"] =                 moduleData.EP_PANDARIA,
-    ["Дренор"] =                  moduleData.EP_WOD,
+    ["Дренор"] =                   moduleData.EP_WOD,
     ["Легион"] =                   moduleData.EP_LEGION,
-    ["Зандалар"] =                moduleData.EP_BFA,
+    ["Зандалар"] =                 moduleData.EP_BFA,
     ["Кул-Тирас"] =                moduleData.EP_BFA,
-    ["Темные Земли"] =              moduleData.EP_SL,
-    ["Драконьи острова"] =             moduleData.EP_DF,
-    ["Каз Алгар"] =               moduleData.EP_WW,
+    ["Темных Земель"] =            moduleData.EP_SL,
+    ["Драконьих островов"] =       moduleData.EP_DF,
+    ["Каз Алгара"] =               moduleData.EP_WW,
+    ["Midnight"] =                 moduleData.EP_MN,
   },
 
   -- Check these items to create more locales...
@@ -145,7 +156,6 @@ moduleData.expansionIdentifierToVersionNumber = {
   -- Shadowlands:  https://www.wowhead.com/spell=309831/shadowlands-cooking
   -- Dragon Isles: https://www.wowhead.com/item=194641/design-elemental-lariat
   -- Khaz Algar:   https://www.wowhead.com/item=223133/formula-illusory-adornment-crystal
-
-
+  -- Midnight:     https://www.wowhead.com/item=258141/recipe-haranir-phial-of-perception
 
 }

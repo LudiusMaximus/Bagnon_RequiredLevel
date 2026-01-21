@@ -431,6 +431,7 @@ moduleData.EP_BFA =      "8"
 moduleData.EP_SL =       "9"
 moduleData.EP_DF =       "10"
 moduleData.EP_WW =       "11"
+moduleData.EP_MN =       "12"
 
 
 
