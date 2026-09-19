@@ -14,13 +14,22 @@ local tonumber = tonumber
 
 -- WoW API
 local CreateFrame = _G.CreateFrame
-local GetItemInfo = _G.GetItemInfo
+local GetItemInfo = _G.C_Item.GetItemInfo
 local GetSpellInfo = _G.GetSpellInfo
 local GetProfessions = _G.GetProfessions
 local GetProfessionInfo = _G.GetProfessionInfo
 local UnitLevel = _G.UnitLevel
 
 local SpellBook_GetSpellBookSlot = _G.SpellBook_GetSpellBookSlot
+
+
+-- WOW_PROJECT_ID does not distinguish WoW Forever: it answers WOW_PROJECT_MAINLINE there, even though Forever
+-- is a 1.60 game with none of retail's content. So we determine the flavour ourselves and use isMainline instead
+-- of WOW_PROJECT_ID everywhere. Interface versions are major*10000 + minor*100 + patch, so 1.x spans 10000-19999
+-- and Forever sits at 1.60.x.
+local interfaceVersion = select(4, GetBuildInfo())
+local isForever = interfaceVersion >= 16000 and interfaceVersion < 20000
+local isMainline = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and not isForever
 
 
 -- WoW Strings
@@ -34,9 +43,11 @@ local locale = GetLocale()
 
 
 -- For pre-Cata there is no GetProfessions() so we have to scan the spell book for
--- spells indicating that a profession was learned.
+-- spells indicating that a profession was learned. We feature-detect GetProfessions() instead of checking the
+-- expansion level, because WoW Forever is a 1.60 game (LE_EXPANSION_LEVEL_CURRENT < 3) that nevertheless has
+-- GetProfessions() and the retail-based UI, where SpellBookFrame does not exist at all.
 local professionSpells = nil
-if LE_EXPANSION_LEVEL_CURRENT < 3 then
+if not GetProfessions then
 
   -- Very cool trick by MunkDev: https://www.wowinterface.com/forums/showthread.php?p=325688#post325688
   local function StopLastSound()
@@ -316,8 +327,8 @@ local CharacterHasProfession = function(bagnonItem, itemId)
 
 
   -- For pre-Cata there is no GetProfessions() so we have to scan the spell book for
-  -- spells indicating that a profession was learned.
-  if LE_EXPANSION_LEVEL_CURRENT < 3 then
+  -- spells indicating that a profession was learned. (See the professionSpells definition above.)
+  if not GetProfessions then
 
     for i = 1, 24 do
       if _G["SpellButton" .. i] then
@@ -452,7 +463,7 @@ local ReadRecipeTooltip = function(professionName, bagnonItem)
   -- If the locale is not known, just search for the required skill and ignore the expansion.
   -- The same, if we are in Classic, because there were no expansion specific profession levels then.
   if not moduleData.itemMinSkillString[locale] or not moduleData.expansionIdentifierToVersionNumber[locale]
-      or WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+      or not isMainline then
     searchOnlySkillPattern = "^.*%((%d+)%).*$"
   else
     -- ITEM_MIN_SKILL = "Requires %s (%d)"
@@ -474,7 +485,7 @@ local ReadRecipeTooltip = function(professionName, bagnonItem)
   local start = scannerTooltip:NumLines()
   local stop = 2
   local incr = -1
-  if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+  if not isMainline then
     start = 2
     stop = scannerTooltip:NumLines()
     incr = 1
@@ -745,9 +756,9 @@ end
 -- -- To test CharacterHasProfession() on items by item id:
 -- local testframe1 = CreateFrame("Frame", _, UIParent, BackdropTemplateMixin and "BackdropTemplate")
 -- testframe1:SetBackdrop({ bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-                      -- edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
-                      -- tile = true, tileSize = 16, edgeSize = 16,
-                      -- insets = { left = 4, right = 4, top = 4, bottom = 4 }})
+--                       edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
+--                       tile = true, tileSize = 16, edgeSize = 16,
+--                       insets = { left = 4, right = 4, top = 4, bottom = 4 }})
 -- testframe1:SetBackdropColor(0.0, 0.0, 0.0, 1.0)
 -- testframe1:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
@@ -763,16 +774,17 @@ end
 
 -- testframe1:SetScript("OnEnter", function()
 
-  -- local itemId = 34109    -- Weather-Beaten Journal (Fishing book).
-  -- -- local itemId = 45912    -- Book of Glyph Mastery (Inscription book).
-  -- -- local itemId = 187560   -- Rockin' Rollin' Racer Pack (book without profession).
+--   local itemId = 3736      -- Recipe: Tasty Lion Steak
+--   -- local itemId = 34109    -- Weather-Beaten Journal (Fishing book).
+--   -- local itemId = 45912    -- Book of Glyph Mastery (Inscription book).
+--   -- local itemId = 187560   -- Rockin' Rollin' Racer Pack (book without profession).
 
-  -- print(CharacterHasProfession(nil, itemId))
+--   print(CharacterHasProfession(nil, itemId))
 
-  -- -- Just for visual inspection of the tooltip.
-  -- GameTooltip:SetOwner(testframe1, "ANCHOR_TOPLEFT")
-  -- GameTooltip:SetItemByID(itemId)
-  -- GameTooltip:Show()
+--   -- Just for visual inspection of the tooltip.
+--   GameTooltip:SetOwner(testframe1, "ANCHOR_TOPLEFT")
+--   GameTooltip:SetItemByID(itemId)
+--   GameTooltip:Show()
 
 -- end )
 

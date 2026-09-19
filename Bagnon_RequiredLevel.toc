@@ -1,11 +1,37 @@
-﻿## Interface: 120007
+﻿## Interface: 120007, 16001, 50504, 20506, 11509
 ## Version: @project-version@
 ## Title: Bagnon RequiredLevel
-## IconAtlas: Levelup-Icon-Bag
+## IconAtlas: Levelup-Icon-Bag [AllowLoadGameType mainline, camelot]
+## IconAtlas: ParagonReputation_Bag [AllowLoadGameType mists, tbc, vanilla]
 ## Author: LudiusMaximus
-## Notes: A simple Bagnon plugin that displays |nitems and recipes in red for which |nthe required character or skill level |nis not yet fulfilled. The required level |nis then displayed in the corner. |n(Based on "Bagnon ItemLevel" |nby Lars "Goldpaw" Norberg.)
+
+## Notes: A simple Bagnon plugin that displays items and recipes in red for which the required character or skill level is not yet fulfilled. The required level is then displayed in the corner.|n(Based on "Bagnon ItemLevel" by Lars "Goldpaw" Norberg.)
+## Notes-deDE: Ein einfaches Bagnon-Plugin, das Gegenstände und Rezepte in Rot anzeigt, für die die benötigte Charakter- oder Fertigkeitsstufe noch nicht erreicht ist. Die benötigte Stufe wird dann in der Ecke angezeigt.|n(Basierend auf „Bagnon ItemLevel“ von Lars „Goldpaw“ Norberg.)
+## Notes-esES: Un sencillo plugin de Bagnon que muestra objetos y recetas en rojo para los cuales el nivel de personaje o de habilidad requerido aún no se ha alcanzado. El nivel requerido se muestra en la esquina.|n(Basado en "Bagnon ItemLevel" de Lars "Goldpaw" Norberg.)
+## Notes-esMX: Un sencillo plugin de Bagnon que muestra objetos y recetas en rojo para los cuales el nivel de personaje o de habilidad requerido aún no se ha alcanzado. El nivel requerido se muestra en la esquina.|n(Basado en "Bagnon ItemLevel" de Lars "Goldpaw" Norberg.)
+## Notes-frFR: Un simple plugin Bagnon qui affiche les objets et recettes en rouge pour lesquels le niveau de personnage ou de compétence requis n'est pas encore atteint. Le niveau requis est alors affiché dans le coin.|n(Basé sur "Bagnon ItemLevel" de Lars "Goldpaw" Norberg.)
+## Notes-itIT: Un semplice plugin per Bagnon che mostra oggetti e ricette in rosso per i quali il livello del personaggio o dell'abilità richiesto non è ancora stato raggiunto. Il livello richiesto viene poi mostrato nell'angolo.|n(Basato su "Bagnon ItemLevel" di Lars "Goldpaw" Norberg.)
+## Notes-koKR: 간단한 Bagnon 플러그인으로, 요구되는 캐릭터 또는 기술 레벨을 아직 달성하지 못한 아이템과 레시피를 빨간색으로 표시합니다. 요구 레벨은 모서리에 표시됩니다.|n(Lars "Goldpaw" Norberg의 "Bagnon ItemLevel" 기반.)
+## Notes-ptBR: Um plugin simples do Bagnon que exibe itens e receitas em vermelho para os quais o nível de personagem ou habilidade necessário ainda não foi alcançado. O nível necessário é então exibido no canto.|n(Baseado em "Bagnon ItemLevel" de Lars "Goldpaw" Norberg.)
+## Notes-ruRU: Простой плагин для Bagnon, который отображает предметы и рецепты красным цветом, если требуемый уровень персонажа или навыка еще не достигнут. Требуемый уровень затем отображается в углу.|n(Основано на «Bagnon ItemLevel» от Lars «Goldpaw» Norberg.)
+## Notes-zhCN: 一个简单的 Bagnon 插件，如果所需的角色或技能等级尚未达到，物品和配方将以红色显示。所需的等级会显示在角落。|n（基于 Lars "Goldpaw" Norberg 的 "Bagnon ItemLevel"。）
+## Notes-zhTW: 一個簡單的 Bagnon 插件，如果所需的角色或技能等級尚未達到，物品和配方將以紅色顯示。所需的等級會顯示在角落。|n（基於 Lars "Goldpaw" Norberg 的 "Bagnon ItemLevel"。）
+
+## Category: Inventory
+## Category-deDE: Inventar
+## Category-esES: Inventario
+## Category-esMX: Inventario
+## Category-frFR: Inventaire
+## Category-itIT: Inventario
+## Category-koKR: 소지품
+## Category-ptBR: Inventário
+## Category-ruRU: Инвентарь
+## Category-zhCN: 物品栏
+## Category-zhTW: 物品欄
+
 ## RequiredDeps: Bagnon
 ## OptionalDeps: Bagnon_BoE, Bagnon_ItemInfo
+
 ## X-Curse-Project-ID: 305899
 ## X-WoWI-ID: 24849
 ## X-Donate: PayPal:ludiusmaximus@gmail.com
