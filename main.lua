@@ -23,13 +23,9 @@ local UnitLevel = _G.UnitLevel
 local SpellBook_GetSpellBookSlot = _G.SpellBook_GetSpellBookSlot
 
 
--- WOW_PROJECT_ID does not distinguish WoW Forever: it answers WOW_PROJECT_MAINLINE there, even though Forever
--- is a 1.60 game with none of retail's content. So we determine the flavour ourselves and use isMainline instead
--- of WOW_PROJECT_ID everywhere. Interface versions are major*10000 + minor*100 + patch, so 1.x spans 10000-19999
--- and Forever sits at 1.60.x.
-local interfaceVersion = select(4, GetBuildInfo())
-local isForever = interfaceVersion >= 16000 and interfaceVersion < 20000
-local isMainline = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and not isForever
+-- Only retail has its expansion specific profession levels. WoW Forever, a 1.60 game with none of retail's
+-- content, has its own WOW_PROJECT_ID (WOW_PROJECT_CAMELOT), so it is not counted as mainline here.
+local isMainline = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 
 
 -- WoW Strings
